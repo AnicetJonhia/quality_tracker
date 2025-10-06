@@ -14,9 +14,22 @@ import hashlib
 import secrets
 import jwt
 
-# Database setup
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost/buildingmap")
-engine = create_engine(DATABASE_URL)
+# # Database setup
+# DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost/quality_tracker")
+# engine = create_engine(DATABASE_URL)
+# SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# Base = declarative_base()
+
+#  Database setup with SQLite fallback
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+sqlite_path = os.path.join(BASE_DIR, "database.db")
+DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{sqlite_path}")
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+)
+
+# 🧩 Création de la session et du modèle de base
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -320,7 +333,7 @@ Base.metadata.create_all(bind=engine)
 
 @app.get("/")
 def read_root():
-    return {"message": "Buildingmap API", "version": "1.0.0"}
+    return {"message": "QualityTracker API", "version": "1.0.0", "documentation:": "/docs"}
 
 # Authentication
 @app.post("/api/auth/register", response_model=TokenResponse)
@@ -531,4 +544,4 @@ def get_dashboard_stats(current_user: User = Depends(get_current_user), db: Sess
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="localhost", port=8000)
