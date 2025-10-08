@@ -15,7 +15,8 @@ interface User {
 interface AuthState {
   user: User | null
   token: string | null
-  setAuth: (user: User, token: string) => void
+  refreshToken: string | null
+  setAuth: (user: User, token: string, refreshToken?: string) => void
   logout: () => void
   isAuthenticated: () => boolean
 }
@@ -25,8 +26,9 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       user: null,
       token: null,
-      setAuth: (user, token) => set({ user, token }),
-      logout: () => set({ user: null, token: null }),
+      refreshToken: null,
+      setAuth: (user, token, refreshToken) => set({ user, token, refreshToken }),
+      logout: () => set({ user: null, token: null, refreshToken: null }),
       isAuthenticated: () => !!get().token,
     }),
     {
@@ -52,7 +54,7 @@ export async function login(email: string, password: string) {
   }
 
   const data = await response.json()
-  useAuthStore.getState().setAuth(data.user, data.access_token)
+  useAuthStore.getState().setAuth(data.user, data.access_token, data.refresh_token)
   return data
 }
 
@@ -62,7 +64,7 @@ export async function register(email: string, password: string, full_name: strin
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ email, password, full_name, role: "user" }),
+    body: JSON.stringify({ email, password, full_name, role: "producer" }),
   })
 
   if (!response.ok) {
@@ -71,7 +73,7 @@ export async function register(email: string, password: string, full_name: strin
   }
 
   const data = await response.json()
-  useAuthStore.getState().setAuth(data.user, data.access_token)
+  useAuthStore.getState().setAuth(data.user, data.access_token, data.refresh_token)
   return data
 }
 

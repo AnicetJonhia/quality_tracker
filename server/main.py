@@ -1,171 +1,52 @@
-from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form, status
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form, status, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Float, Boolean, ForeignKey, Text, Enum as SQLEnum
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session, relationship
-from datetime import datetime, timedelta
+from fastapi.responses import JSONResponse, FileResponse
+from sqlalchemy.orm import Session
+from sqlalchemy import or_, and_
 from typing import List, Optional
-from pydantic import BaseModel, EmailStr
-import enum
-import os
+from datetime import datetime
 import hashlib
-import secrets
-import jwt
+import os
 
-# # Database setup
-# DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost/quality_tracker")
-# engine = create_engine(DATABASE_URL)
-# SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-# Base = declarative_base()
+from core.config import settings
+from core.security import (
+    get_password_hash,
+    verify_password,
+    create_access_token,
+    create_refresh_token,
+    get_current_user_id,
+    security
+)
+from db.session import get_db, engine
+from db.base import Base
 
-#  Database setup with SQLite fallback
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-sqlite_path = os.path.join(BASE_DIR, "database.db")
-DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{sqlite_path}")
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+from models.user import User, UserRole
+from models.project import Project
+from models.delivery import Delivery, DeliveryStatus
+from models.delivery_file import DeliveryFile
+from models.nce import NCE, NCEStatus, NCESeverity
+from models.survey import Survey, SurveyType
+from models.notification import Notification
+
+from pydantic import BaseModel, EmailStr
+
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI(title=settings.PROJECT_NAME, version=settings.VERSION)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://localhost:3001"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# 🧩 Création de la session et du modèle de base
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
-
-# Enums
-class UserRole(str, enum.Enum):
-    ADMIN = "admin"
-    MANAGER = "manager"
-    USER = "user"
-    CLIENT = "client"
-
-class DeliveryStatus(str, enum.Enum):
-    PENDING = "pending"
-    IN_PROGRESS = "in_progress"
-    DELIVERED = "delivered"
-    REJECTED = "rejected"
-
-class NCEStatus(str, enum.Enum):
-    OPEN = "open"
-    IN_PROGRESS = "in_progress"
-    RESOLVED = "resolved"
-    CLOSED = "closed"
-
-class NCESeverity(str, enum.Enum):
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
-    CRITICAL = "critical"
-
-class SurveyType(str, enum.Enum):
-    NPS = "nps"
-    CSAT = "csat"
-
-# Database Models
-class User(Base):
-    __tablename__ = "users"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True, nullable=False)
-    full_name = Column(String, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    role = Column(SQLEnum(UserRole), default=UserRole.USER)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    
-    deliveries = relationship("Delivery", back_populates="created_by_user")
-    surveys = relationship("Survey", back_populates="user")
-    nces_created = relationship("NCE", foreign_keys="[NCE.created_by]", back_populates="created_by_user")
-    nces_assigned = relationship("NCE", foreign_keys="[NCE.assigned_to]", back_populates="assigned_to_user")
-
-class Project(Base):
-    __tablename__ = "projects"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
-    description = Column(Text)
-    client_name = Column(String)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    deliveries = relationship("Delivery", back_populates="project")
-
-class Delivery(Base):
-    __tablename__ = "deliveries"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
-    title = Column(String, nullable=False)
-    description = Column(Text)
-    status = Column(SQLEnum(DeliveryStatus), default=DeliveryStatus.PENDING)
-    version = Column(Integer, default=1)
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    delivered_at = Column(DateTime)
-    receipt_url = Column(String)
-    checksum = Column(String)
-    
-    project = relationship("Project", back_populates="deliveries")
-    created_by_user = relationship("User", back_populates="deliveries")
-    files = relationship("DeliveryFile", back_populates="delivery")
-    surveys = relationship("Survey", back_populates="delivery")
-    nces = relationship("NCE", back_populates="delivery")
-
-class DeliveryFile(Base):
-    __tablename__ = "delivery_files"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    delivery_id = Column(Integer, ForeignKey("deliveries.id"), nullable=False)
-    filename = Column(String, nullable=False)
-    file_path = Column(String, nullable=False)
-    file_type = Column(String)
-    file_size = Column(Integer)
-    checksum = Column(String)
-    uploaded_at = Column(DateTime, default=datetime.utcnow)
-    
-    delivery = relationship("Delivery", back_populates="files")
-
-class Survey(Base):
-    __tablename__ = "surveys"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    delivery_id = Column(Integer, ForeignKey("deliveries.id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    survey_type = Column(SQLEnum(SurveyType), nullable=False)
-    score = Column(Integer)
-    comment = Column(Text)
-    sent_at = Column(DateTime, default=datetime.utcnow)
-    completed_at = Column(DateTime)
-    
-    delivery = relationship("Delivery", back_populates="surveys")
-    user = relationship("User", back_populates="surveys")
-
-class NCE(Base):
-    __tablename__ = "nces"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    delivery_id = Column(Integer, ForeignKey("deliveries.id"), nullable=False)
-    title = Column(String, nullable=False)
-    description = Column(Text, nullable=False)
-    severity = Column(SQLEnum(NCESeverity), default=NCESeverity.MEDIUM)
-    status = Column(SQLEnum(NCEStatus), default=NCEStatus.OPEN)
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
-    assigned_to = Column(Integer, ForeignKey("users.id"))
-    created_at = Column(DateTime, default=datetime.utcnow)
-    resolved_at = Column(DateTime)
-    resolution_notes = Column(Text)
-    
-    delivery = relationship("Delivery", back_populates="nces")
-    created_by_user = relationship("User", foreign_keys=[created_by], back_populates="nces_created")
-    assigned_to_user = relationship("User", foreign_keys=[assigned_to], back_populates="nces_assigned")
-
-# Pydantic Models
 class UserCreate(BaseModel):
     email: EmailStr
     full_name: str
     password: str
-    role: UserRole = UserRole.USER
+    role: UserRole = UserRole.PRODUCER
 
 class UserResponse(BaseModel):
     id: int
@@ -174,9 +55,19 @@ class UserResponse(BaseModel):
     role: UserRole
     is_active: bool
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+class TokenResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str
+    user: UserResponse
 
 class ProjectCreate(BaseModel):
     name: str
@@ -189,7 +80,7 @@ class ProjectResponse(BaseModel):
     description: Optional[str]
     client_name: Optional[str]
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -207,7 +98,7 @@ class DeliveryResponse(BaseModel):
     version: int
     created_at: datetime
     delivered_at: Optional[datetime]
-    
+
     class Config:
         from_attributes = True
 
@@ -225,7 +116,7 @@ class NCEResponse(BaseModel):
     severity: NCESeverity
     status: NCEStatus
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -243,124 +134,74 @@ class SurveyResponse(BaseModel):
     comment: Optional[str]
     sent_at: datetime
     completed_at: Optional[datetime]
-    
+
     class Config:
         from_attributes = True
 
-class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str
-
-class TokenResponse(BaseModel):
-    access_token: str
-    token_type: str
-    user: UserResponse
+class NotificationResponse(BaseModel):
+    id: int
+    title: str
+    message: str
+    type: str
+    is_read: bool
+    created_at: datetime
+    link: Optional[str]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
-
-# FastAPI App
-app = FastAPI(title="Buildingmap API", version="1.0.0")
-
-# CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Database dependency
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-# JWT Configuration
-SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
-
-security = HTTPBearer()
-
-# Helper functions
-def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode()).hexdigest()
-
-def calculate_checksum(content: bytes) -> str:
-    return hashlib.sha256(content).hexdigest()
-
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
-
-def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    try:
-        token = credentials.credentials
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: int = payload.get("sub")
-        if user_id is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate credentials",
-            )
-        return user_id
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token has expired",
-        )
-    except jwt.JWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-        )
-
-def get_current_user(user_id: int = Depends(verify_token), db: Session = Depends(get_db)):
+def get_current_user(user_id: int = Depends(get_current_user_id), db: Session = Depends(get_db)) -> User:
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
-# Create tables
-Base.metadata.create_all(bind=engine)
+def check_permission(user: User, action: str, resource: str, resource_owner_id: Optional[int] = None) -> bool:
+    if user.role == UserRole.ADMIN or user.role == UserRole.QUALITY:
+        return True
 
-# API Endpoints
+    if user.role == UserRole.PRODUCER:
+        if action == "read" and resource == "clients":
+            return True
+        if action in ["create", "read", "update", "delete"] and resource_owner_id == user.id:
+            return True
+        return False
+
+    if user.role == UserRole.CLIENT:
+        if action == "create" and resource == "nce":
+            return True
+        if action in ["read", "update", "delete"] and resource_owner_id == user.id:
+            return True
+        return False
+
+    return False
 
 @app.get("/")
 def read_root():
-    return {"message": "QualityTracker API", "version": "1.0.0", "documentation:": "/docs"}
+    return {"message": "QualityTracker API", "version": settings.VERSION, "documentation": "/docs"}
 
-# Authentication
 @app.post("/api/auth/register", response_model=TokenResponse)
 def register(user: UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.email == user.email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
-    
+
     new_user = User(
         email=user.email,
         full_name=user.full_name,
-        hashed_password=hash_password(user.password),
+        hashed_password=get_password_hash(user.password),
         role=user.role
     )
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    
-    access_token = create_access_token(data={"sub": new_user.id})
+
+    access_token = create_access_token(data={"sub": new_user.id, "role": new_user.role.value})
+    refresh_token = create_refresh_token(data={"sub": new_user.id})
+
     return {
         "access_token": access_token,
+        "refresh_token": refresh_token,
         "token_type": "bearer",
         "user": new_user
     }
@@ -368,21 +209,24 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
 @app.post("/api/auth/login", response_model=TokenResponse)
 def login(login_data: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == login_data.email).first()
-    if not user or user.hashed_password != hash_password(login_data.password):
+    if not user or not verify_password(login_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
         )
-    
+
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User account is inactive",
         )
-    
-    access_token = create_access_token(data={"sub": user.id})
+
+    access_token = create_access_token(data={"sub": user.id, "role": user.role.value})
+    refresh_token = create_refresh_token(data={"sub": user.id})
+
     return {
         "access_token": access_token,
+        "refresh_token": refresh_token,
         "token_type": "bearer",
         "user": user
     }
@@ -391,36 +235,39 @@ def login(login_data: LoginRequest, db: Session = Depends(get_db)):
 def get_me(current_user: User = Depends(get_current_user)):
     return current_user
 
-# Users
-@app.post("/api/users", response_model=UserResponse)
-def create_user(user: UserCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    # Only admins can create users
-    if current_user.role != UserRole.ADMIN:
-        raise HTTPException(status_code=403, detail="Not authorized")
-    
-    db_user = db.query(User).filter(User.email == user.email).first()
-    if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    
-    new_user = User(
-        email=user.email,
-        full_name=user.full_name,
-        hashed_password=hash_password(user.password),
-        role=user.role
-    )
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    return new_user
-
 @app.get("/api/users", response_model=List[UserResponse])
-def get_users(skip: int = 0, limit: int = 100, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def get_users(
+    skip: int = 0,
+    limit: int = 100,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if current_user.role not in [UserRole.ADMIN, UserRole.QUALITY]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
     users = db.query(User).offset(skip).limit(limit).all()
     return users
 
-# Projects
+@app.get("/api/clients", response_model=List[UserResponse])
+def get_clients(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if current_user.role not in [UserRole.ADMIN, UserRole.QUALITY, UserRole.PRODUCER]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    clients = db.query(User).filter(User.role == UserRole.CLIENT).all()
+    return clients
+
 @app.post("/api/projects", response_model=ProjectResponse)
-def create_project(project: ProjectCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def create_project(
+    project: ProjectCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if current_user.role not in [UserRole.ADMIN, UserRole.QUALITY]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
     new_project = Project(**project.dict())
     db.add(new_project)
     db.commit()
@@ -428,20 +275,47 @@ def create_project(project: ProjectCreate, current_user: User = Depends(get_curr
     return new_project
 
 @app.get("/api/projects", response_model=List[ProjectResponse])
-def get_projects(skip: int = 0, limit: int = 100, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    projects = db.query(Project).offset(skip).limit(limit).all()
+def get_projects(
+    skip: int = 0,
+    limit: int = 100,
+    search: Optional[str] = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    query = db.query(Project)
+
+    if search:
+        query = query.filter(
+            or_(
+                Project.name.contains(search),
+                Project.description.contains(search),
+                Project.client_name.contains(search)
+            )
+        )
+
+    projects = query.offset(skip).limit(limit).all()
     return projects
 
 @app.get("/api/projects/{project_id}", response_model=ProjectResponse)
-def get_project(project_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def get_project(
+    project_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     return project
 
-# Deliveries
 @app.post("/api/deliveries", response_model=DeliveryResponse)
-def create_delivery(delivery: DeliveryCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def create_delivery(
+    delivery: DeliveryCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if current_user.role not in [UserRole.ADMIN, UserRole.QUALITY, UserRole.PRODUCER]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
     new_delivery = Delivery(**delivery.dict(), created_by=current_user.id)
     db.add(new_delivery)
     db.commit()
@@ -449,71 +323,210 @@ def create_delivery(delivery: DeliveryCreate, current_user: User = Depends(get_c
     return new_delivery
 
 @app.get("/api/deliveries", response_model=List[DeliveryResponse])
-def get_deliveries(skip: int = 0, limit: int = 100, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    deliveries = db.query(Delivery).offset(skip).limit(limit).all()
+def get_deliveries(
+    skip: int = 0,
+    limit: int = 100,
+    search: Optional[str] = None,
+    status_filter: Optional[DeliveryStatus] = None,
+    project_id: Optional[int] = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    query = db.query(Delivery)
+
+    if current_user.role == UserRole.PRODUCER:
+        query = query.filter(Delivery.created_by == current_user.id)
+    elif current_user.role == UserRole.CLIENT:
+        query = query.filter(
+            Delivery.project.has(Project.client_name == current_user.full_name)
+        )
+
+    if search:
+        query = query.filter(
+            or_(
+                Delivery.title.contains(search),
+                Delivery.description.contains(search)
+            )
+        )
+
+    if status_filter:
+        query = query.filter(Delivery.status == status_filter)
+
+    if project_id:
+        query = query.filter(Delivery.project_id == project_id)
+
+    deliveries = query.order_by(Delivery.created_at.desc()).offset(skip).limit(limit).all()
     return deliveries
 
 @app.get("/api/deliveries/{delivery_id}", response_model=DeliveryResponse)
-def get_delivery(delivery_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def get_delivery(
+    delivery_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     delivery = db.query(Delivery).filter(Delivery.id == delivery_id).first()
     if not delivery:
         raise HTTPException(status_code=404, detail="Delivery not found")
+
+    if current_user.role == UserRole.PRODUCER and delivery.created_by != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
     return delivery
 
-@app.put("/api/deliveries/{delivery_id}/status")
-def update_delivery_status(delivery_id: int, status: DeliveryStatus, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+@app.patch("/api/deliveries/{delivery_id}/status")
+def update_delivery_status(
+    delivery_id: int,
+    new_status: DeliveryStatus,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if current_user.role not in [UserRole.ADMIN, UserRole.QUALITY]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
     delivery = db.query(Delivery).filter(Delivery.id == delivery_id).first()
     if not delivery:
         raise HTTPException(status_code=404, detail="Delivery not found")
-    
-    delivery.status = status
-    if status == DeliveryStatus.DELIVERED:
+
+    old_status = delivery.status
+    delivery.status = new_status
+
+    if new_status == DeliveryStatus.APPROVED:
         delivery.delivered_at = datetime.utcnow()
-    
+
     db.commit()
     db.refresh(delivery)
+
+    notification = Notification(
+        user_id=delivery.created_by,
+        title="Delivery Status Updated",
+        message=f"Delivery '{delivery.title}' status changed from {old_status.value} to {new_status.value}",
+        type="delivery_status",
+        link=f"/deliveries/{delivery.id}"
+    )
+    db.add(notification)
+    db.commit()
+
     return delivery
 
-# NCEs
 @app.post("/api/nces", response_model=NCEResponse)
-def create_nce(nce: NCECreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def create_nce(
+    nce: NCECreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if current_user.role not in [UserRole.ADMIN, UserRole.QUALITY, UserRole.PRODUCER, UserRole.CLIENT]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
     new_nce = NCE(**nce.dict(), created_by=current_user.id)
     db.add(new_nce)
     db.commit()
     db.refresh(new_nce)
+
+    delivery = db.query(Delivery).filter(Delivery.id == nce.delivery_id).first()
+    if delivery:
+        notification = Notification(
+            user_id=delivery.created_by,
+            title="New NCE Created",
+            message=f"NCE '{new_nce.title}' created for delivery '{delivery.title}'",
+            type="nce_created",
+            link=f"/nce/{new_nce.id}"
+        )
+        db.add(notification)
+        db.commit()
+
     return new_nce
 
 @app.get("/api/nces", response_model=List[NCEResponse])
-def get_nces(skip: int = 0, limit: int = 100, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    nces = db.query(NCE).offset(skip).limit(limit).all()
+def get_nces(
+    skip: int = 0,
+    limit: int = 100,
+    search: Optional[str] = None,
+    status_filter: Optional[NCEStatus] = None,
+    severity_filter: Optional[NCESeverity] = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    query = db.query(NCE)
+
+    if current_user.role == UserRole.PRODUCER:
+        query = query.filter(NCE.created_by == current_user.id)
+    elif current_user.role == UserRole.CLIENT:
+        query = query.filter(NCE.created_by == current_user.id)
+
+    if search:
+        query = query.filter(
+            or_(
+                NCE.title.contains(search),
+                NCE.description.contains(search)
+            )
+        )
+
+    if status_filter:
+        query = query.filter(NCE.status == status_filter)
+
+    if severity_filter:
+        query = query.filter(NCE.severity == severity_filter)
+
+    nces = query.order_by(NCE.created_at.desc()).offset(skip).limit(limit).all()
     return nces
 
 @app.get("/api/nces/{nce_id}", response_model=NCEResponse)
-def get_nce(nce_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def get_nce(
+    nce_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     nce = db.query(NCE).filter(NCE.id == nce_id).first()
     if not nce:
         raise HTTPException(status_code=404, detail="NCE not found")
+
+    if current_user.role == UserRole.PRODUCER and nce.created_by != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
     return nce
 
-@app.put("/api/nces/{nce_id}/status")
-def update_nce_status(nce_id: int, status: NCEStatus, resolution_notes: Optional[str] = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+@app.patch("/api/nces/{nce_id}/status")
+def update_nce_status(
+    nce_id: int,
+    new_status: NCEStatus,
+    resolution_notes: Optional[str] = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if current_user.role not in [UserRole.ADMIN, UserRole.QUALITY]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
     nce = db.query(NCE).filter(NCE.id == nce_id).first()
     if not nce:
         raise HTTPException(status_code=404, detail="NCE not found")
-    
-    nce.status = status
-    if status == NCEStatus.RESOLVED or status == NCEStatus.CLOSED:
+
+    nce.status = new_status
+    if new_status in [NCEStatus.RESOLVED, NCEStatus.CLOSED]:
         nce.resolved_at = datetime.utcnow()
         if resolution_notes:
             nce.resolution_notes = resolution_notes
-    
+
     db.commit()
     db.refresh(nce)
+
+    notification = Notification(
+        user_id=nce.created_by,
+        title="NCE Status Updated",
+        message=f"NCE '{nce.title}' status changed to {new_status.value}",
+        type="nce_status",
+        link=f"/nce/{nce.id}"
+    )
+    db.add(notification)
+    db.commit()
+
     return nce
 
-# Surveys
 @app.post("/api/surveys", response_model=SurveyResponse)
-def create_survey(survey: SurveyCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def create_survey(
+    survey: SurveyCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     new_survey = Survey(**survey.dict(), user_id=current_user.id, completed_at=datetime.utcnow())
     db.add(new_survey)
     db.commit()
@@ -521,25 +534,79 @@ def create_survey(survey: SurveyCreate, current_user: User = Depends(get_current
     return new_survey
 
 @app.get("/api/surveys", response_model=List[SurveyResponse])
-def get_surveys(skip: int = 0, limit: int = 100, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def get_surveys(
+    skip: int = 0,
+    limit: int = 100,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     surveys = db.query(Survey).offset(skip).limit(limit).all()
     return surveys
 
-# Dashboard Stats
+@app.get("/api/notifications", response_model=List[NotificationResponse])
+def get_notifications(
+    skip: int = 0,
+    limit: int = 20,
+    unread_only: bool = False,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    query = db.query(Notification).filter(Notification.user_id == current_user.id)
+
+    if unread_only:
+        query = query.filter(Notification.is_read == False)
+
+    notifications = query.order_by(Notification.created_at.desc()).offset(skip).limit(limit).all()
+    return notifications
+
+@app.patch("/api/notifications/{notification_id}/read")
+def mark_notification_read(
+    notification_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    notification = db.query(Notification).filter(
+        Notification.id == notification_id,
+        Notification.user_id == current_user.id
+    ).first()
+
+    if not notification:
+        raise HTTPException(status_code=404, detail="Notification not found")
+
+    notification.is_read = True
+    db.commit()
+
+    return {"message": "Notification marked as read"}
+
 @app.get("/api/dashboard/stats")
-def get_dashboard_stats(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    total_deliveries = db.query(Delivery).count()
-    total_nces = db.query(NCE).count()
+def get_dashboard_stats(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if current_user.role in [UserRole.ADMIN, UserRole.QUALITY]:
+        total_deliveries = db.query(Delivery).count()
+        total_nces = db.query(NCE).count()
+    elif current_user.role == UserRole.PRODUCER:
+        total_deliveries = db.query(Delivery).filter(Delivery.created_by == current_user.id).count()
+        total_nces = db.query(NCE).filter(NCE.created_by == current_user.id).count()
+    else:
+        total_deliveries = 0
+        total_nces = db.query(NCE).filter(NCE.created_by == current_user.id).count()
+
     open_nces = db.query(NCE).filter(NCE.status == NCEStatus.OPEN).count()
-    
-    # Calculate average NPS
-    nps_surveys = db.query(Survey).filter(Survey.survey_type == SurveyType.NPS, Survey.score.isnot(None)).all()
+
+    nps_surveys = db.query(Survey).filter(
+        Survey.survey_type == SurveyType.NPS,
+        Survey.score.isnot(None)
+    ).all()
     avg_nps = sum([s.score for s in nps_surveys]) / len(nps_surveys) if nps_surveys else 0
-    
-    # Calculate average CSAT
-    csat_surveys = db.query(Survey).filter(Survey.survey_type == SurveyType.CSAT, Survey.score.isnot(None)).all()
+
+    csat_surveys = db.query(Survey).filter(
+        Survey.survey_type == SurveyType.CSAT,
+        Survey.score.isnot(None)
+    ).all()
     avg_csat = sum([s.score for s in csat_surveys]) / len(csat_surveys) if csat_surveys else 0
-    
+
     return {
         "total_deliveries": total_deliveries,
         "total_nces": total_nces,
@@ -550,4 +617,4 @@ def get_dashboard_stats(current_user: User = Depends(get_current_user), db: Sess
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="localhost", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000)

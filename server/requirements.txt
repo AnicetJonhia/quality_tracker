@@ -6,3 +6,10 @@ pydantic
 pydantic[email]
 python-multipart
 pyjwt
+bcrypt
+passlib[bcrypt]
+boto3
+reportlab
+alembic
+python-dotenv
+aiosmtplib
