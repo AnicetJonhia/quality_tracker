@@ -76,7 +76,8 @@ class User(Base):
     
     deliveries = relationship("Delivery", back_populates="created_by_user")
     surveys = relationship("Survey", back_populates="user")
-    nces = relationship("NCE", back_populates="created_by_user")
+    nces_created = relationship("NCE", foreign_keys="[NCE.created_by]", back_populates="created_by_user")
+    nces_assigned = relationship("NCE", foreign_keys="[NCE.assigned_to]", back_populates="assigned_to_user")
 
 class Project(Base):
     __tablename__ = "projects"
@@ -156,7 +157,8 @@ class NCE(Base):
     resolution_notes = Column(Text)
     
     delivery = relationship("Delivery", back_populates="nces")
-    created_by_user = relationship("User", foreign_keys=[created_by], back_populates="nces")
+    created_by_user = relationship("User", foreign_keys=[created_by], back_populates="nces_created")
+    assigned_to_user = relationship("User", foreign_keys=[assigned_to], back_populates="nces_assigned")
 
 # Pydantic Models
 class UserCreate(BaseModel):
@@ -252,7 +254,11 @@ class LoginRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str
-    user: "UserResponse"
+    user: UserResponse
+
+    class Config:
+        orm_mode = True
+
 
 # FastAPI App
 app = FastAPI(title="Buildingmap API", version="1.0.0")
