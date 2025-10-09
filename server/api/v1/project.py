@@ -4,7 +4,7 @@ from typing import List
 from models.project import Project
 from schemas.project import ProjectCreate, ProjectResponse
 from db.session import get_db
-from core.security import get_current_user
+from core.dependencies import get_current_user
 from models.user import User, UserRole
 from typing import Optional
 from sqlalchemy import or_

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from db.session import get_db
 from models.user import User, UserRole
-from core.security import get_current_user
+from core.dependencies import get_current_user
 from models.notification import Notification
 from schemas.notification import  NotificationResponse
 

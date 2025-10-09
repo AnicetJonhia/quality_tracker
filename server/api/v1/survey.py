@@ -5,7 +5,7 @@ from models.survey import Survey
 from schemas.survey import SurveyCreate, SurveyResponse
 from db.session import get_db
 from models.user import User, UserRole
-from core.security import get_current_user
+from core.dependencies import get_current_user
 from datetime import datetime
 from sqlalchemy import or_
 

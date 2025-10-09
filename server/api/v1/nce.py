@@ -5,7 +5,7 @@ from models.nce import NCE, NCEStatus, NCESeverity
 from schemas.nce import NCECreate, NCEResponse
 from db.session import get_db
 from models.user import User, UserRole
-from core.security import get_current_user
+from core.dependencies import get_current_user
 from models.delivery import Delivery
 from models.notification import Notification
 from datetime import datetime

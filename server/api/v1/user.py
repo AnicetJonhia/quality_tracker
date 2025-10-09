@@ -7,9 +7,9 @@ from typing import List
 from db.session import get_db
 from models.user import User, UserRole
 from schemas.user import UserCreate, UserResponse
-from core.security import get_current_user
+from core.dependencies import get_current_user
 
-router = APIRouter(prefix="/", tags=["users"])
+router = APIRouter(prefix="", tags=["users"])
 @router.get("/users", response_model=List[UserResponse])
 def get_users(
     skip: int = 0,

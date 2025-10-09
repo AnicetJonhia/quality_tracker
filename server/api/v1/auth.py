@@ -4,10 +4,9 @@ from core.security import (
     verify_password,
     create_access_token,
     create_refresh_token,
-    get_current_user_id,
-    security
+
 )
-from db.base import Session
+from sqlalchemy.orm import Session
 from schemas.user import UserCreate, UserResponse, TokenResponse, LoginRequest
 from db.session import get_db
 from fastapi import APIRouter, Depends, HTTPException, status

@@ -5,7 +5,7 @@ from models.delivery import Delivery, DeliveryStatus
 from schemas.delivery import DeliveryCreate, DeliveryResponse
 from db.session import get_db
 from models.user import User, UserRole
-from core.security import get_current_user
+from core.dependencies import get_current_user
 from models.project import Project
 from sqlalchemy import or_
 from models.notification import Notification

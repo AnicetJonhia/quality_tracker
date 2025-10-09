@@ -11,9 +11,9 @@ from models.nce import NCE, NCEStatus
 from models.survey import Survey, SurveyType
 from models.user import User, UserRole
 
-app = APIRouter()
+router = APIRouter()
 
-@app.get("/dashboard/stats")
+@router.get("/dashboard/stats")
 def get_dashboard_stats(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
