@@ -1,9 +1,12 @@
+import models
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
 from db.base import Base
 from db.session import engine
 from api.v1 import auth, user, nce, notification, delivery, project, survey, core
+
+
 
 Base.metadata.create_all(bind=engine)
 

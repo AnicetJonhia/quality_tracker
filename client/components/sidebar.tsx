@@ -120,11 +120,11 @@ export function Sidebar() {
       <Sheet>
         <SheetTrigger asChild>
           <Button
-            variant="ghost"
-            size="icon"
-            className="fixed top-4 left-4 z-40 md:hidden"
+            variant="default"
+            
+            className="fixed bottom-4 left-2 z-40 md:hidden"
           >
-            <Menu className="h-5 w-5" />
+            <Menu className="h-4 w-4"/>
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="p-0 w-64">
