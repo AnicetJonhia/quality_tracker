@@ -51,7 +51,7 @@ export default function RegisterPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="mb-4">
-            <h1 className="text-2xl font-bold text-primary">Buildingmap</h1>
+            <h1 className="text-2xl font-bold text-primary">QualityTracker</h1>
           </div>
           <CardTitle className="text-2xl">Create an account</CardTitle>
           <CardDescription>Enter your information to get started</CardDescription>

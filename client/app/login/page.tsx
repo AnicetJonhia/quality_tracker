@@ -38,7 +38,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="mb-4">
-            <h1 className="text-2xl font-bold text-primary">Buildingmap</h1>
+            <h1 className="text-2xl font-bold text-primary">QualityTracker</h1>
           </div>
           <CardTitle className="text-2xl">Sign in</CardTitle>
           <CardDescription>Enter your email and password to access your account</CardDescription>

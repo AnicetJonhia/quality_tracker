@@ -57,3 +57,4 @@ def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(secu
             detail="Could not validate credentials",
         )
     return user_id
+
