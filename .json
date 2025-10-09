@@ -1,0 +1,65 @@
+{
+  "id": "d2f1c8a4-8b2b-4f4f-b0d7-123456789abc",
+  "project": {
+    "id": "a1b2c3d4-e5f6-7890-abcd-1234567890ef",
+    "name": "Projet Construction Bâtiment A",
+    "client_guest": {
+      "id": "f1e2d3c4-b5a6-7890-cdef-0987654321ab",
+      "email": "client.exemple@domain.com",
+      "created_at": "2025-10-01T09:15:00Z"
+    }
+  },
+  "title": "Livraison plans structurels",
+  "version": "v2",
+  "issuer": {
+    "id": "u1234567-89ab-cdef-0123-456789abcdef",
+    "email": "qualite@futurmap.com",
+    "role": "quality"
+  },
+  "created_at": "2025-10-09T11:30:00Z",
+  "files": [
+    {
+      "id": "file001-uuid-1234",
+      "storage_key": "minio/2025/10/09/file001.pdf",
+      "filename": "plans_structurels_v2.pdf",
+      "created_at": "2025-10-09T11:31:00Z"
+    },
+    {
+      "id": "file002-uuid-5678",
+      "storage_key": "minio/2025/10/09/file002.zip",
+      "filename": "model3D_structure.zip",
+      "created_at": "2025-10-09T11:32:00Z"
+    }
+  ],
+  "delivery_receipt": {
+    "id": "receipt-uuid-9876",
+    "file": {
+      "id": "file003-uuid-0001",
+      "storage_key": "minio/2025/10/09/receipt.pdf",
+      "filename": "accuse_reception_v2.pdf",
+      "created_at": "2025-10-09T11:35:00Z"
+    },
+    "generated_at": "2025-10-09T11:36:00Z"
+  },
+  "nces": [
+    {
+      "id": "nce001-uuid-4321",
+      "title": "Erreur dans plancher étage 2",
+      "description": "La cote indiquée dans la feuille 4 est incorrecte.",
+      "category": "précision",
+      "severity": "major",
+      "status": "open",
+      "reporter_email": "client.exemple@domain.com",
+      "created_at": "2025-10-09T12:00:00Z"
+    }
+  ],
+  "surveys": [
+    {
+      "id": "survey001-uuid-7890",
+      "type": "NPS",
+      "score": 9,
+      "respondent_email": "client.exemple@domain.com",
+      "responded_at": "2025-10-09T12:05:00Z"
+    }
+  ]
+}
