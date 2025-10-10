@@ -1,0 +1,98 @@
+@startuml
+title Architecture Automatisée — Livraison + Outlook + Google Forms + Audit
+
+package "Application Locale" {
+  class User {
+    +UUID id
+    +String email
+    +Role role
+    +createDelivery()
+    +sendMail()
+  }
+
+  class Delivery {
+    +UUID id
+    +String title
+    +String description
+    +Timestamp created_at
+  }
+
+  class EmailToken {
+    +UUID id
+    +String token
+    +UUID delivery_id
+    +String guest_email
+    +Timestamp expires_at
+    +consume()
+  }
+
+  class AuditLog {
+    +UUID id
+    +UUID user_id
+    +String action
+    +UUID delivery_id
+    +String guest_email
+    +Timestamp timestamp
+    +JSON details
+  }
+
+  class Survey {
+    +UUID id
+    +UUID delivery_id
+    +SmallInt score
+    +String respondent_email
+    +Timestamp responded_at
+  }
+
+  class NCE {
+    +UUID id
+    +UUID delivery_id
+    +String title
+    +Text description
+    +Severity severity
+    +Status status
+    +String reporter_email
+    +Timestamp created_at
+  }
+}
+
+package "Microsoft Graph API" {
+  class Outlook {
+    +sendEmail(from: User, to: Guest, content: String, attachments: List<File>)
+  }
+}
+
+package "Guest Interaction" {
+  class Guest {
+    +UUID id
+    +String email
+    +String name
+    +Timestamp created_at
+    +downloadDelivery()
+    +fillNCE()
+    +fillSurvey()
+  }
+
+  class GoogleForm {
+    +collectNCE()
+    +collectSurvey()
+  }
+
+  class GoogleAppsScript {
+    +sendResponsesToAPI()
+  }
+}
+
+User "1" --> "0..*" Delivery : crée
+Delivery "1" --> "0..*" EmailToken : génère
+User "1" --> "0..*" AuditLog : crée
+App --> Outlook : utilise
+Outlook --> Guest : mail envoyé
+Guest --> GoogleForm : remplit
+GoogleForm --> GoogleAppsScript : déclenche
+GoogleAppsScript --> App : POST réponses
+App --> Survey : enregistre
+App --> NCE : enregistre
+App --> AuditLog : log
+
+@enduml

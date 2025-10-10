@@ -1,0 +1,40 @@
+@startuml
+title Séquence — Envoi de livraison via OAuth2 Microsoft Graph API
+
+actor User as "Utilisateur interne (Outlook)"
+participant App as "Application Locale"
+participant "Azure AD (OAuth2)" as Azure
+participant "Microsoft Graph API" as Graph
+participant Guest as "Client externe (Guest)"
+
+== Authentification OAuth2 ==
+User -> App : Clic "Se connecter avec Microsoft"
+App -> Azure : Ouvre page de login Microsoft\n(client_id, scopes=Mail.Send)
+Azure -> User : Page de connexion Microsoft
+User -> Azure : Email + mot de passe Outlook
+Azure -> App : Code d’autorisation (redirect_uri)
+App -> Azure : Échange code contre Access Token
+Azure --> App : Access Token + Refresh Token (valable ~1h)
+
+note right of App
+L’app stocke temporairement le token
+pour envoyer des mails au nom de l’utilisateur.
+Pas de mot de passe conservé.
+end note
+
+== Envoi de la livraison ==
+User -> App : Crée une livraison + fichiers joints
+App -> App : Génère EmailToken(unique)
+App -> Graph : POST /me/sendMail\nAuthorization: Bearer <access_token>
+Graph -> Guest : Envoi du mail Outlook (avec liens & pièces jointes)
+
+note right of Guest
+Le mail est reçu depuis le vrai compte Outlook
+de l'utilisateur interne (ex: pierre@entreprise.com)
+end note
+
+== Confirmation ==
+Graph --> App : 202 Accepted
+App -> App : AuditLog(action="livraison envoyée", user, guest, delivery_id)
+
+@enduml
