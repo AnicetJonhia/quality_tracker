@@ -21,6 +21,7 @@ erDiagram
         UUID project_id FK
         VARCHAR title
         VARCHAR version
+        VARCHAR description
         UUID issuer_id FK
         TIMESTAMP created_at
     }

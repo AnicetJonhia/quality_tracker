@@ -29,6 +29,7 @@ class Delivery {
   +UUID id
   +UUID project_id
   +String title
+  +Description description
   +String version
   +UUID issuer_id
   +Timestamp created_at

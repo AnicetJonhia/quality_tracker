@@ -9,7 +9,7 @@ participant TokenService
 participant DB
 participant JWTService
 
-Guest -> Browser : Click https://app/.../t/<token>
+Guest -> Browser : Click https://app.lorem.com/.../t/<token>
 Browser -> FE : GET /t/<token>
 FE -> API : POST /api/token/consume { token }   <-- token in body
 API -> TokenService : validate_and_consume(token)

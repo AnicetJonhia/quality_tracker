@@ -28,7 +28,7 @@ API -> MinIO : PUT file(s)
 MinIO --> API : storage_key(s)
 API -> DB : INSERT file rows (storage_key, filename, delivery_id)
 API -> DB : INSERT EmailToken(token, email=client_email, purpose=view_delivery, resource_id=delivery_id, max_uses=1, expires_at=...)
-API -> EmailService : sendEmail(client_email, url=https://confiance.futurmap.com/.../t/<token>)
+API -> EmailService : sendEmail(client_email, url=https://app.lorem.com/.../t/<token>)
 EmailService --> API : 200
 API --> FE : 201 Delivery created + link sent
 

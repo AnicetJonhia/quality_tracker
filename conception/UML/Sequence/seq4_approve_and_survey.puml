@@ -32,7 +32,7 @@ else survey not configured
   ' Example: user triggers email_token for survey:
   User -> API : POST /send-survey {delivery_id, guest_email}
   API -> DB : INSERT EmailToken(purpose=respond_survey, resource_id=delivery_id,...)
-  API -> EmailService : sendEmail(guest_email, url=https://app/.../t/<token>)
+  API -> EmailService : sendEmail(guest_email, url=https://app.lorem.com/.../t/<token>)
 end
 
 @enduml
