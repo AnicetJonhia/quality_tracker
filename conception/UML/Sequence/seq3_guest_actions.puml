@@ -1,0 +1,35 @@
+@startuml
+title Seq 3 — Guest accesses delivery page, download file, create NCE (all via JWT)
+
+actor Guest
+participant Browser
+participant FE as FrontendApp
+participant API
+participant DB
+participant MinIO
+participant NotificationService
+
+Browser -> FE : GET /app/delivery/<id> (sends Authorization: Bearer <JWT>)
+FE -> API : GET /deliveries/<id> Authorization: Bearer <JWT>
+API -> DB : validate_jwt -> guest_id ; SELECT delivery + files
+DB --> API : delivery + file metadata
+API --> FE : 200 + metadata
+Guest -> FE : click "Download file"
+FE -> API : GET /files/<file_id>/download Authorization: Bearer <JWT>
+API -> DB : validate_jwt + check resource match
+API -> MinIO : GET object (server-side stream)
+MinIO --> API : file stream
+API --> FE : file stream -> browser downloads
+
+opt Guest files justification -> create NCE
+  Guest -> FE : fill NCE form + upload evidence
+  FE -> API : POST /nce {delivery_id, title, description} Authorization: Bearer <JWT>
+  API -> DB : validate_jwt -> insert nce (reporter_email = guest.email)
+  API -> MinIO : PUT evidence file(s)
+  API -> DB : insert file(s) with nce_id
+  API -> NotificationService : notify(role=quality, message="NCE created")
+  NotificationService --> API : ok
+  API --> FE : 201 NCE created
+end
+
+@enduml

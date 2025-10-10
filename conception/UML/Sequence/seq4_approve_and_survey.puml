@@ -1,0 +1,38 @@
+@startuml
+title Seq 4 — Guest approves delivery -> DeliveryReceipt created ; NPS/CSAT flows
+
+actor Guest
+participant Browser
+participant FE as FrontendApp
+participant API
+participant DB
+participant EmailService
+participant NotificationService
+
+' Approval path
+Guest -> FE : click "Approve delivery" (in-app) Authorization: Bearer <JWT>
+FE -> API : POST /deliveries/<id>/approve Authorization: Bearer <JWT>
+API -> DB : validate_jwt -> create DeliveryReceipt(delivery_id, file_id(s), approved_by_guest_id)
+API -> DB : INSERT audit_log(action="approve_delivery", actor=guest.email,...)
+API -> NotificationService : notify(issuer_user_id, "Delivery approved")
+NotificationService --> API : ok
+API --> FE : 200 OK (show "Merci, livraison approuvée")
+
+' NPS/CSAT immediate (if survey configured for delivery)
+alt survey already configured on delivery
+  FE -> API : GET /surveys?delivery_id=<id> Authorization: Bearer <JWT>
+  API -> DB : SELECT survey template
+  API --> FE : survey form
+  Guest -> FE : submit survey (NPS/CSAT)
+  FE -> API : POST /surveys {delivery_id, type, score, comment} Authorization: Bearer <JWT>
+  API -> DB : INSERT survey row
+  API --> FE : 201 thank you
+else survey not configured
+  note right: User can later create/send EmailToken for survey (same pattern as delivery link)
+  ' Example: user triggers email_token for survey:
+  User -> API : POST /send-survey {delivery_id, guest_email}
+  API -> DB : INSERT EmailToken(purpose=respond_survey, resource_id=delivery_id,...)
+  API -> EmailService : sendEmail(guest_email, url=https://app/.../t/<token>)
+end
+
+@enduml

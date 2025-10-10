@@ -1,0 +1,33 @@
+@startuml
+title Seq 2 — Guest consumes token -> JWT -> App loads delivery
+
+actor Guest
+participant Browser
+participant FE as FrontendApp
+participant API
+participant TokenService
+participant DB
+participant JWTService
+
+Guest -> Browser : Click https://app/.../t/<token>
+Browser -> FE : GET /t/<token>
+FE -> API : POST /api/token/consume { token }   <-- token in body
+API -> TokenService : validate_and_consume(token)
+TokenService -> DB : SELECT FOR UPDATE email_token WHERE token=...
+DB --> TokenService : token_row or none
+alt token invalid/expired/used
+  TokenService --> API : error 4xx
+  API --> FE : 4xx -> show friendly error page
+else token valid
+  TokenService -> DB : UPDATE email_token SET uses_count = uses_count +1
+  TokenService -> DB : SELECT guest WHERE email = token_row.email
+  DB --> TokenService : guest_row or none
+  alt guest missing
+    TokenService -> DB : INSERT guest(email=token_row.email) -> guest_id
+  end
+  TokenService -> JWTService : create_short_jwt({sub: guest_id, scope:purpose, resource:resource_id})
+  JWTService --> API : jwt_token
+  API --> FE : 200 {access_token: jwt_token, expires_in:...}
+end
+FE -> Browser : store token (in-memory or cookie) and redirect to /app/delivery/<resource_id>
+@enduml
