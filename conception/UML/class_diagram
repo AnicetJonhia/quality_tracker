@@ -1,0 +1,118 @@
+@startuml
+title Diagramme de classes — ConfianceFmap 
+
+' --- Entités principales ---
+class User {
+  +UUID id
+  +String email
+  +Role role
+  +Timestamp created_at
+  +createProject()
+  +createDelivery()
+}
+
+class Guest {
+  +UUID id
+  +String email
+  +String name (nullable)
+  +Timestamp created_at
+}
+
+class Project {
+  +UUID id
+  +String name
+  +UUID client_guest_id (nullable)
+  +Timestamp created_at
+}
+
+class Delivery {
+  +UUID id
+  +UUID project_id
+  +String title
+  +String version
+  +UUID issuer_id
+  +Timestamp created_at
+  +approve(guest_id)
+}
+
+class File {
+  +UUID id
+  +String storage_key
+  +String filename
+  +UUID delivery_id
+  +Timestamp created_at
+}
+
+class DeliveryReceipt {
+  +UUID id
+  +UUID delivery_id
+  +UUID file_id
+  +UUID approved_by_guest_id
+  +Timestamp generated_at
+}
+
+class EmailToken {
+  +UUID id
+  +String token
+  +String email
+  +Purpose purpose
+  +UUID resource_id (nullable)
+  +Timestamp expires_at
+  +Integer max_uses
+  +Integer uses_count
+  +consume()
+}
+
+class Survey {
+  +UUID id
+  +UUID delivery_id
+  +SurveyType type  -- (NPS, CSAT)
+  +SmallInt score
+  +String respondent_email (nullable)
+  +Timestamp responded_at
+}
+
+class NCE {
+  +UUID id
+  +UUID delivery_id
+  +String title
+  +Text description
+  +Severity severity
+  +Status status
+  +String reporter_email (nullable)
+  +Timestamp created_at
+}
+
+class Notification {
+  +UUID id
+  +UUID recipient_user_id (nullable)
+  +String guest_email (nullable)
+  +String type
+  +Text message
+  +Boolean is_read
+  +Timestamp created_at
+}
+
+class AuditLog {
+  +UUID id
+  +String entity
+  +UUID entity_id (nullable)
+  +String action
+  +String actor_email (nullable)
+  +JSONB details
+  +Timestamp created_at
+}
+
+' --- Associations (compact) ---
+User "1" -- "0..*" Project : creates
+Guest "0..1" -- "0..*" Project : client_of
+Project "1" -- "0..*" Delivery : contains
+Delivery "1" -- "0..*" File : stores
+Delivery "1" -- "0..*" Survey : may_have
+Delivery "1" -- "0..1" DeliveryReceipt : approved_by
+Delivery "1" -- "0..*" NCE : may_have
+File "0..*" -- "0..1" DeliveryReceipt : referenced_in
+User "0..*" -- "0..*" Notification : receives
+Guest "0..*" -- "0..*" Notification : receives_guest
+
+@enduml
