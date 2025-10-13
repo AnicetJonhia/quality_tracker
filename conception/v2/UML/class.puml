@@ -1,45 +1,70 @@
 @startuml
-title Architecture Automatisée — Livraison + Outlook + Google Forms + Audit
+title Diagramme — Livraison & NCE & Sondage
 
-package "Application Locale" {
+package "Domain" {
   class User {
     +UUID id
     +String email
-    +Role role
-    +createDelivery()
-    +sendMail()
+    +ENUM role {Admin, Quality, Producer}
+  }
+
+  class Project {
+    +UUID id
+    +String name
+    +UUID owner_id
   }
 
   class Delivery {
     +UUID id
     +String title
     +String description
+    +Enum status {DRAFT, PUBLISHED, WITHDRAWN}
     +Timestamp created_at
+    +Timestamp published_at
+  }
+
+  class File {
+    +UUID id
+    +UUID delivery_id
+    +String storage_key
+    +String filename
+    +Timestamp created_at
+    +Bool deleted (soft)
+  }
+
+  class Receipt {
+    +UUID id
+    +UUID delivery_id
+    +UUID file_id
+    +UUID generated_by
+    +Timestamp generated_at
   }
 
   class EmailToken {
     +UUID id
-    +String token
+    +String token_hash
     +UUID delivery_id
     +String guest_email
     +Timestamp expires_at
-    +consume()
+    +Int max_uses
+    +Int uses_count
   }
 
-  class AuditLog {
+  class Notification {
     +UUID id
-    +UUID user_id
-    +String action
     +UUID delivery_id
-    +String guest_email
-    +Timestamp timestamp
-    +JSON details
+    +String to_email
+    +Enum channel {EMAIL}
+    +Enum status {PENDING,SENT,FAILED}
+    +Timestamp sent_at
   }
 
   class Survey {
     +UUID id
-    +UUID delivery_id
+    +UUID delivery_id (nullable)
+    +Enum type {NPS, CSAT}
     +SmallInt score
+    +String comment
     +String respondent_email
     +Timestamp responded_at
   }
@@ -49,50 +74,51 @@ package "Application Locale" {
     +UUID delivery_id
     +String title
     +Text description
-    +Severity severity
-    +Status status
-    +String reporter_email
+    +Enum category {precision, coherence, oubli}
+    +Enum severity {minor, major, critical}
+    +Enum status {OPEN, INVESTIGATING, IN_PROGRESS, RESOLVED, CLOSED}
+    +UUID assigned_to (nullable)
     +Timestamp created_at
+    +List<File> attachments
   }
-}
 
-package "Microsoft Graph API" {
-  class Outlook {
-    +sendEmail(from: User, to: Guest, content: String, attachments: List<File>)
+  class AuditLog {
+    +UUID id
+    +UUID user_id
+    +String action_type
+    +String entity_type
+    +UUID entity_id
+    +Timestamp timestamp
   }
-}
 
-package "Guest Interaction" {
   class Guest {
     +UUID id
     +String email
     +String name
     +Timestamp created_at
-    +downloadDelivery()
-    +fillNCE()
-    +fillSurvey()
-  }
-
-  class GoogleForm {
-    +collectNCE()
-    +collectSurvey()
-  }
-
-  class GoogleAppsScript {
-    +sendResponsesToAPI()
   }
 }
 
+package "Integrations" {
+  class EmailService {
+    +sendEmail(notificationId)
+    +pollInbox() : processReplies()
+  }
+}
+
+' Relations
 User "1" --> "0..*" Delivery : crée
+Project "1" --> "0..*" Delivery : contient
+Delivery "1" --> "0..*" File : contient
+Delivery "1" --> "0..1" Receipt : a
 Delivery "1" --> "0..*" EmailToken : génère
+Delivery "1" --> "0..*" Notification : crée
+Delivery "1" --> "0..*" Survey : collecte
+Delivery "1" --> "0..*" NCE : collecte
 User "1" --> "0..*" AuditLog : crée
-App --> Outlook : utilise
-Outlook --> Guest : mail envoyé
-Guest --> GoogleForm : remplit
-GoogleForm --> GoogleAppsScript : déclenche
-GoogleAppsScript --> App : POST réponses
-App --> Survey : enregistre
-App --> NCE : enregistre
-App --> AuditLog : log
+Guest "0..*" --> Notification : reçoit
+Guest "0..*" --> EmailService : répond par email (attachments + NCE info)
+EmailService --> Survey : crée
+EmailService --> NCE : crée + stocke fichiers
 
 @enduml

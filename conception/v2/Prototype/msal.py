@@ -4,6 +4,7 @@ import requests
 from ms_graph import generate_access_token
 
 def draft_attachment(file_path):
+    
     if not os.path.exists(file_path):
         print('file is not found')
         return
