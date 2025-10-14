@@ -6,6 +6,7 @@ import { AuthGuard } from "@/components/auth-guard"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Package, AlertTriangle, TrendingUp, Star } from "lucide-react"
 import { api } from "@/lib/api"
+import Link from "next/link"
 
 export default function DashboardPage() {
   const [stats, setStats] = useState({
@@ -137,16 +138,21 @@ export default function DashboardPage() {
                       <CardDescription>Common tasks and operations</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-3">
-                        <button className="w-full rounded-lg bg-primary px-4 py-3 text-left text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
-                          Create New Delivery
-                        </button>
-                        <button className="w-full rounded-lg bg-accent px-4 py-3 text-left text-sm font-medium text-accent-foreground hover:bg-accent/90 transition-colors">
-                          Report NCE
-                        </button>
-                        <button className="w-full rounded-lg border border-border bg-card px-4 py-3 text-left text-sm font-medium text-foreground hover:bg-muted transition-colors">
-                          View Analytics
-                        </button>
+                      <div className="space-y-4" >
+
+                        <Link href={"/nce"} className="block " >
+                            <button className="w-full cursor-pointer rounded-lg bg-primary px-4 py-3 text-left text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+                             NCE
+                          </button>
+                        </Link>
+                  
+                        <Link href="/analytics" className="block ">
+                           <button className="w-full cursor-pointer rounded-lg bg-accent px-4 py-3 text-left text-sm font-medium text-accent-foreground hover:bg-accent/90 transition-colors">
+                              View Analytics
+                            </button>
+                        </Link>
+                       
+                   
                       </div>
                     </CardContent>
                   </Card>
