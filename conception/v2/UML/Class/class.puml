@@ -16,9 +16,11 @@ package "Domain" {
 
   class Delivery {
     +UUID id
+    +UUID project_id
     +String title
     +String description
-    +Enum status {DRAFT, PUBLISHED, WITHDRAWN}
+    +UUID issuer_id 
+    +Enum status {DRAFT, PUBLISHED}
     +Timestamp created_at
     +Timestamp published_at
   }
@@ -26,10 +28,11 @@ package "Domain" {
   class File {
     +UUID id
     +UUID delivery_id
+    +UUID nce_id
     +String storage_key
     +String filename
     +Timestamp created_at
-    +Bool deleted (soft)
+
   }
 
   class Receipt {
@@ -38,16 +41,6 @@ package "Domain" {
     +UUID file_id
     +UUID generated_by
     +Timestamp generated_at
-  }
-
-  class EmailToken {
-    +UUID id
-    +String token_hash
-    +UUID delivery_id
-    +String guest_email
-    +Timestamp expires_at
-    +Int max_uses
-    +Int uses_count
   }
 
   class Notification {
@@ -76,7 +69,7 @@ package "Domain" {
     +Text description
     +Enum category {precision, coherence, oubli}
     +Enum severity {minor, major, critical}
-    +Enum status {OPEN, INVESTIGATING, IN_PROGRESS, RESOLVED, CLOSED}
+    +Enum status {OPEN ,IN_PROGRESS, CLOSED}
     +UUID assigned_to (nullable)
     +Timestamp created_at
     +List<File> attachments
@@ -103,6 +96,8 @@ package "Integrations" {
   class EmailService {
     +sendEmail(notificationId)
     +pollInbox() : processReplies()
+    +parseAttachments()
+    +classifySurveyOrNCE()
   }
 }
 
@@ -111,7 +106,6 @@ User "1" --> "0..*" Delivery : crée
 Project "1" --> "0..*" Delivery : contient
 Delivery "1" --> "0..*" File : contient
 Delivery "1" --> "0..1" Receipt : a
-Delivery "1" --> "0..*" EmailToken : génère
 Delivery "1" --> "0..*" Notification : crée
 Delivery "1" --> "0..*" Survey : collecte
 Delivery "1" --> "0..*" NCE : collecte

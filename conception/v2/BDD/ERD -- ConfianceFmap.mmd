@@ -1,0 +1,97 @@
+---
+config:
+  look: neo
+  theme: redux-dark-color
+---
+erDiagram
+    USER {
+        uuid id "PK"
+        varchar email
+        enum role "Admin,Quality,Producer"
+        timestamp created_at
+    }
+    PROJECT {
+        uuid id "PK"
+        varchar name
+        uuid owner_id "FK"
+    }
+    DELIVERY {
+        uuid id "PK"
+        uuid project_id "FK"
+        uuid issuer_id "FK"
+        varchar title
+        text description
+        enum status "DRAFT,PUBLISHED"
+        timestamp created_at
+        timestamp published_at
+    }
+    FILE {
+        uuid id "PK"
+        uuid delivery_id "FK"
+        uuid nce_id "FK NULL"
+        varchar storage_key
+        varchar filename
+        timestamp created_at
+    }
+    RECEIPT {
+        uuid id "PK"
+        uuid delivery_id "FK"
+        uuid file_id "FK"
+        uuid generated_by "FK"
+        timestamp generated_at
+    }
+    NOTIFICATION {
+        uuid id "PK"
+        uuid delivery_id "FK"
+        varchar to_email
+        enum channel "EMAIL"
+        enum status "PENDING,SENT,FAILED"
+        timestamp sent_at
+    }
+    SURVEY {
+        uuid id "PK"
+        uuid delivery_id "FK NULL"
+        enum type "NPS,CSAT"
+        smallint score
+        text comment
+        varchar respondent_email
+        timestamp responded_at
+    }
+    NCE {
+        uuid id "PK"
+        uuid delivery_id "FK"
+        varchar title
+        text description
+        enum category "precision,coherence,oubli"
+        enum severity "minor,major,critical"
+        enum status "OPEN,IN_PROGRESS,CLOSED"
+        uuid assigned_to "FK NULL"
+        timestamp created_at
+    }
+    AUDIT_LOG {
+        uuid id "PK"
+        uuid user_id "FK"
+        varchar action_type
+        varchar entity_type
+        uuid entity_id
+        timestamp timestamp
+    }
+    GUEST {
+        uuid id "PK"
+        varchar email "UNIQUE"
+        varchar name
+        timestamp created_at
+    }
+    USER ||--o{ PROJECT : owns
+    USER ||--o{ DELIVERY : issues
+    USER ||--o{ AUDIT_LOG : logs
+    USER ||--o{ RECEIPT : generates
+    USER ||--o{ NCE : assigned_to
+    PROJECT ||--o{ DELIVERY : contains
+    DELIVERY ||--o{ FILE : has
+    DELIVERY ||--|| RECEIPT : generates
+    DELIVERY ||--o{ NOTIFICATION : sends
+    DELIVERY ||--o{ SURVEY : collects
+    DELIVERY ||--o{ NCE : collects
+    NCE ||--o{ FILE : attachments
+    GUEST ||--o{ NOTIFICATION : receives
