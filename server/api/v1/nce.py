@@ -111,8 +111,14 @@ def update_nce(
     # Met à jour les champs si fournis
     if nce_update.status is not None:
         nce.status = nce_update.status
+        
+
         if nce_update.status == NCEStatus.RESOLVED:
             nce.resolved_at = datetime.utcnow()
+        else :
+            nce.resolved_at = None
+          
+            
 
     if nce_update.severity is not None:
         nce.severity = nce_update.severity
@@ -132,5 +138,5 @@ def update_nce(
     )
     db.add(notification)
     db.commit()
-
+    
     return nce

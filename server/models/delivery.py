@@ -28,6 +28,6 @@ class Delivery(Base):
 
     project = relationship("Project", back_populates="deliveries")
     created_by_user = relationship("User", back_populates="deliveries", foreign_keys=[created_by])
-    files = relationship("DeliveryFile", back_populates="delivery")
+    files = relationship("File", back_populates="delivery")
     surveys = relationship("Survey", back_populates="delivery")
     nces = relationship("NCE", back_populates="delivery")

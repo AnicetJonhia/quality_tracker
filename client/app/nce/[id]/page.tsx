@@ -23,13 +23,11 @@ interface NCE {
   category: string
   created_at: string
   resolved_at: string | null
-  resolution_notes: string | null
 }
 
 const severityConfig = {
   low: { icon: Info, color: "bg-blue-500/10 text-blue-500 border-blue-500/20" },
   medium: { icon: AlertCircle, color: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20" },
-  high: { icon: AlertTriangle, color: "bg-orange-500/10 text-orange-500 border-orange-500/20" },
   critical: { icon: AlertOctagon, color: "bg-red-500/10 text-red-500 border-red-500/20" },
 }
 
@@ -113,6 +111,9 @@ export default function NCEDetailPage() {
     severityConfig[nce.severity as keyof typeof severityConfig]?.color ||
     "bg-gray-500/10 text-gray-500 border-gray-500/20"
 
+
+  
+
   return (
     <AuthGuard>
       <div className="flex h-screen bg-background">
@@ -159,7 +160,9 @@ export default function NCEDetailPage() {
                   <div>
                     <span className="text-sm font-medium text-muted-foreground">Reported</span>
                     <p className="text-sm text-foreground mt-1">{new Date(nce.created_at).toLocaleString()}</p>
+                    
                   </div>
+                  
                   {nce.resolved_at && (
                     <div>
                       <span className="text-sm font-medium text-muted-foreground">Resolved</span>

@@ -34,3 +34,5 @@ class NCE(Base):
     delivery = relationship("Delivery", back_populates="nces")
     created_by_user = relationship("User", foreign_keys=[created_by], back_populates="nces_created")
     assigned_to_user = relationship("User", foreign_keys=[assigned_to], back_populates="nces_assigned")
+
+    files = relationship("File", back_populates="nce")

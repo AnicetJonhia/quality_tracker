@@ -24,6 +24,7 @@ class NCEResponse(BaseModel):
     status: NCEStatus
     category: Optional[str] = None
     created_at: datetime
+    resolved_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
