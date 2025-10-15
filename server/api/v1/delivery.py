@@ -80,7 +80,7 @@ def get_delivery(
 
     return delivery
 
-@router.patch("/{delivery_id}/status")
+@router.put("/{delivery_id}/status")
 def update_delivery_status(
     delivery_id: int,
     new_status: DeliveryStatus,

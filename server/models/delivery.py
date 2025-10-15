@@ -5,11 +5,11 @@ import enum
 from db.base import Base
 
 class DeliveryStatus(str, enum.Enum):
-    DRAFT = "draft"
-    SUBMITTED = "submitted"
-    APPROVED = "approved"
-    REJECTED = "rejected"
-    ARCHIVED = "archived"
+    draft = "draft"
+    submitted = "submitted"
+    approved = "approved"
+    rejected = "rejected"
+
 
 class Delivery(Base):
     __tablename__ = "deliveries"
@@ -18,7 +18,7 @@ class Delivery(Base):
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
     title = Column(String, nullable=False, index=True)
     description = Column(Text)
-    status = Column(SQLEnum(DeliveryStatus), default=DeliveryStatus.DRAFT, index=True)
+    status = Column(SQLEnum(DeliveryStatus), default=DeliveryStatus.draft, index=True)
     version = Column(Integer, default=1)
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
