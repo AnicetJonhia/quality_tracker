@@ -151,10 +151,7 @@ export default function NCEDetailPage() {
                     <span className="text-sm font-medium text-muted-foreground">Description</span>
                     <p className="text-sm text-foreground mt-1">{nce.description}</p>
                   </div>
-                  <div>
-                    <span className="text-sm font-medium text-muted-foreground">Severity</span>
-                    <p className="text-sm text-foreground mt-1 capitalize">{nce.severity}</p>
-                  </div>
+                  
                   <div>
                     <span className="text-sm font-medium text-muted-foreground">Delivery ID</span>
                     <p className="text-sm text-foreground mt-1">{nce.delivery_id}</p>

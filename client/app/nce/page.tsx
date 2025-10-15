@@ -6,7 +6,7 @@ import { AuthGuard } from "@/components/auth-guard"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Plus, AlertTriangle, AlertCircle, AlertOctagon, Info } from "lucide-react"
+import { Plus, AlertTriangle, AlertCircle, AlertOctagon, CheckCircle ,Info } from "lucide-react"
 import { api } from "@/lib/api"
 import Link from "next/link"
 import { CreateNCEDialog } from "@/components/create-nce-dialog"
@@ -62,7 +62,12 @@ export default function NCEPage() {
 
   const openNCEs = nces.filter((nce) => nce.status === "open").length
   const inProgressNCEs = nces.filter((nce) => nce.status === "in_progress").length
+  const resolvedNCEs = nces.filter((nce) => nce.status === "resolved").length
+
+  const lowNCEs = nces.filter((nce) => nce.severity === "low").length
+  const mediumNCEs = nces.filter((nce) => nce.severity === "medium").length
   const criticalNCEs = nces.filter((nce) => nce.severity === "critical").length
+
 
   return (
     <AuthGuard>
@@ -116,12 +121,12 @@ export default function NCEPage() {
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Critical</CardTitle>
-                  <AlertOctagon className="h-4 w-4 text-red-500" />
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Resolved</CardTitle>
+                  <CheckCircle className="h-4 w-4 text-green-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-foreground">{criticalNCEs}</div>
-                  <p className="text-xs text-muted-foreground mt-1">High priority</p>
+                  <div className="text-3xl font-bold text-foreground">{resolvedNCEs}</div>
+                  <p className="text-xs text-muted-foreground mt-1">Resolved issues</p>
                 </CardContent>
               </Card>
             </div>
@@ -146,11 +151,16 @@ export default function NCEPage() {
                   <h3 className="text-lg font-semibold text-foreground">All Non-Conformities</h3>
                   <div className="flex gap-2">
                     <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-500/20">
-                      Open: {openNCEs}
+                      Low: {lowNCEs}
                     </Badge>
                     <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">
-                      In Progress: {inProgressNCEs}
+                      Medium: {mediumNCEs}
                     </Badge>
+                    
+                    <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-500/20">
+                      Critical: {criticalNCEs}
+                    </Badge>
+                    
                   </div>
                 </div>
 
