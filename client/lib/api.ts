@@ -85,11 +85,30 @@ export const api = {
   // NCEs
   getNCEs: () => fetchAPI("/api/nces"),
   getNCE: (id: number) => fetchAPI(`/api/nces/${id}`),
-  createNCE: (data: any) =>
-    fetchAPI("/api/nces", {
+  createNCE: async (data: { delivery_id: number; title: string; description: string; files?: File[] }) => {
+    const formData = new FormData()
+    formData.append("delivery_id", data.delivery_id.toString())
+    formData.append("title", data.title)
+    formData.append("description", data.description)
+
+    if (data.files) {
+      data.files.forEach((file) => formData.append("files", file))
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/nces`, {
       method: "POST",
-      body: JSON.stringify(data),
-    }),
+      headers: {
+        ...getAuthHeadersMultipart(), // gère token si nécessaire
+      },
+      body: formData,
+    })
+
+    if (!response.ok) {
+      throw new Error(`NCE creation failed: ${response.statusText}`)
+    }
+
+    return response.json()
+  },
   
 
   updateNCE: (id: number, data: { status?: string; severity?: string; category?: string }) =>
