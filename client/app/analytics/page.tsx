@@ -97,21 +97,20 @@ export default function AnalyticsPage() {
 
   // Delivery status distribution
   const deliveryStatusData = [
-    { name: "Pending", value: deliveries.filter((d) => d.status === "pending").length, color: COLORS.warning },
+    { name: "draft", value: deliveries.filter((d) => d.status === "pending").length, color: COLORS.warning },
     {
-      name: "In Progress",
-      value: deliveries.filter((d) => d.status === "in_progress").length,
+      name: "delivered",
+      value: deliveries.filter((d) => d.status === "delivered").length,
       color: COLORS.primary,
     },
-    { name: "Delivered", value: deliveries.filter((d) => d.status === "delivered").length, color: COLORS.success },
-    { name: "Rejected", value: deliveries.filter((d) => d.status === "rejected").length, color: COLORS.danger },
+    { name: "approved", value: deliveries.filter((d) => d.status === "approved").length, color: COLORS.success },
+    { name: "rejected", value: deliveries.filter((d) => d.status === "rejected").length, color: COLORS.danger },
   ]
 
   // NCE severity distribution
   const nceSeverityData = [
     { name: "Low", value: nces.filter((n) => n.severity === "low").length, color: COLORS.primary },
     { name: "Medium", value: nces.filter((n) => n.severity === "medium").length, color: COLORS.warning },
-    { name: "High", value: nces.filter((n) => n.severity === "high").length, color: COLORS.accent },
     { name: "Critical", value: nces.filter((n) => n.severity === "critical").length, color: COLORS.danger },
   ]
 
@@ -196,7 +195,7 @@ export default function AnalyticsPage() {
                     <CardContent>
                       <div className="text-3xl font-bold text-foreground">{stats.total_deliveries}</div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {deliveries.filter((d) => d.status === "delivered").length} completed
+                        {deliveries.filter((d) => d.status === "approved").length} Approved
                       </p>
                     </CardContent>
                   </Card>
@@ -317,16 +316,16 @@ export default function AnalyticsPage() {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <CheckCircle className="h-5 w-5 text-green-500" />
-                        Completed Deliveries
+                        Approved Deliveries
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="text-4xl font-bold text-foreground">
-                        {deliveries.filter((d) => d.status === "delivered").length}
+                        {deliveries.filter((d) => d.status === "approved").length}
                       </div>
                       <p className="text-sm text-muted-foreground mt-2">
                         {(
-                          (deliveries.filter((d) => d.status === "delivered").length / Math.max(deliveries.length, 1)) *
+                          (deliveries.filter((d) => d.status === "approved").length / Math.max(deliveries.length, 1)) *
                           100
                         ).toFixed(1)}
                         % completion rate
@@ -338,12 +337,12 @@ export default function AnalyticsPage() {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Clock className="h-5 w-5 text-yellow-500" />
-                        In Progress
+                        Delivered Deliveries
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="text-4xl font-bold text-foreground">
-                        {deliveries.filter((d) => d.status === "in_progress").length}
+                        {deliveries.filter((d) => d.status === "delivered").length}
                       </div>
                       <p className="text-sm text-muted-foreground mt-2">Active deliveries</p>
                     </CardContent>

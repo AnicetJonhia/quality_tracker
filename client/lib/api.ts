@@ -49,13 +49,15 @@ export const api = {
       method: "POST",
       body: JSON.stringify(data),
     }),
-  updateNCEStatus: (id: number, status: string, resolution_notes?: string) =>
-    fetchAPI(
-      `/api/nces/${id}/status?status=${status}${resolution_notes ? `&resolution_notes=${resolution_notes}` : ""}`,
-      {
-        method: "PUT",
-      },
-    ),
+  
+
+  updateNCE: (id: number, data: { status?: string; severity?: string; category?: string }) =>
+  fetchAPI(`/api/nces/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }),
+
 
   // Surveys
   getSurveys: () => fetchAPI("/api/surveys"),

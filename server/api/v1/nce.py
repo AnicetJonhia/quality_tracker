@@ -2,7 +2,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from models.nce import NCE, NCEStatus, NCESeverity
-from schemas.nce import NCECreate, NCEResponse
+from schemas.nce import NCECreate, NCEResponse, NCEUpdate
 from db.session import get_db
 from models.user import User, UserRole
 from core.dependencies import get_current_user
@@ -91,11 +91,13 @@ def get_nce(
 
     return nce
 
-@router.patch("/{nce_id}/status")
-def update_nce_status(
+
+
+
+@router.patch("/{nce_id}")
+def update_nce(
     nce_id: int,
-    new_status: NCEStatus,
-    resolution_notes: Optional[str] = None,
+    nce_update: NCEUpdate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -106,19 +108,25 @@ def update_nce_status(
     if not nce:
         raise HTTPException(status_code=404, detail="NCE not found")
 
-    nce.status = new_status
-    if new_status in [NCEStatus.RESOLVED, NCEStatus.CLOSED]:
-        nce.resolved_at = datetime.utcnow()
-        if resolution_notes:
-            nce.resolution_notes = resolution_notes
+    # Met à jour les champs si fournis
+    if nce_update.status is not None:
+        nce.status = nce_update.status
+        if nce_update.status == NCEStatus.RESOLVED:
+            nce.resolved_at = datetime.utcnow()
+
+    if nce_update.severity is not None:
+        nce.severity = nce_update.severity
+
+    if nce_update.category is not None:
+        nce.category = nce_update.category
 
     db.commit()
     db.refresh(nce)
 
     notification = Notification(
         user_id=nce.created_by,
-        title="NCE Status Updated",
-        message=f"NCE '{nce.title}' status changed to {new_status.value}",
+        title="NCE Updated",
+        message=f"NCE '{nce.title}' updated",
         type="nce_status",
         link=f"/nce/{nce.id}"
     )

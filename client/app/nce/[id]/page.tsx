@@ -7,7 +7,7 @@ import { AuthGuard } from "@/components/auth-guard"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ArrowLeft, AlertTriangle, AlertCircle, AlertOctagon, Info } from "lucide-react"
 import { api } from "@/lib/api"
@@ -20,6 +20,7 @@ interface NCE {
   description: string
   severity: string
   status: string
+  category: string
   created_at: string
   resolved_at: string | null
   resolution_notes: string | null
@@ -35,8 +36,7 @@ const severityConfig = {
 const statusColors: Record<string, string> = {
   open: "bg-red-500/10 text-red-500 border-red-500/20",
   in_progress: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
-  resolved: "bg-green-500/10 text-green-500 border-green-500/20",
-  closed: "bg-gray-500/10 text-gray-500 border-gray-500/20",
+  resolved: "bg-green-500/10 text-green-500 border-green-500/20"
 }
 
 export default function NCEDetailPage() {
@@ -46,14 +46,12 @@ export default function NCEDetailPage() {
 
   const [nce, setNCE] = useState<NCE | null>(null)
   const [loading, setLoading] = useState(true)
-  const [resolutionNotes, setResolutionNotes] = useState("")
   const [updating, setUpdating] = useState(false)
 
   const loadNCE = async () => {
     try {
       const data = await api.getNCE(nceId)
       setNCE(data)
-      setResolutionNotes(data.resolution_notes || "")
     } catch (error) {
       console.error("[v0] Failed to load NCE:", error)
     } finally {
@@ -65,17 +63,24 @@ export default function NCEDetailPage() {
     loadNCE()
   }, [nceId])
 
-  const handleStatusChange = async (newStatus: string) => {
-    setUpdating(true)
-    try {
-      await api.updateNCEStatus(nceId, newStatus, resolutionNotes || undefined)
-      loadNCE()
-    } catch (error) {
-      console.error("[v0] Failed to update status:", error)
-    } finally {
-      setUpdating(false)
+
+
+  const handleUpdateNCE = async (updates: {
+      status?: string
+      severity?: string
+      category?: string
+    }) => {
+      setUpdating(true)
+      try {
+        await api.updateNCE(nceId, updates)
+        loadNCE()
+      } catch (error) {
+        console.error("[v0] Failed to update NCE:", error)
+      } finally {
+        setUpdating(false)
+      }
     }
-  }
+
 
   if (loading) {
     return (
@@ -168,52 +173,88 @@ export default function NCEDetailPage() {
               </Card>
 
               <Card>
-                <CardHeader>
-                  <CardTitle>Status Management</CardTitle>
-                  <CardDescription>Update the NCE status and add resolution notes</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="status" className="mb-2 block">
-                      Current Status
-                    </Label>
-                    <Select value={nce.status} onValueChange={handleStatusChange} disabled={updating}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="open">Open</SelectItem>
-                        <SelectItem value="in_progress">In Progress</SelectItem>
-                        <SelectItem value="resolved">Resolved</SelectItem>
-                        <SelectItem value="closed">Closed</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+              <CardHeader>
+                <CardTitle>Quality Management</CardTitle>
+                <CardDescription>Update the NCE status, severity, and category</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
 
-                  <div>
-                    <Label htmlFor="resolutionNotes" className="mb-2 block">
-                      Resolution Notes
-                    </Label>
-                    <Textarea
-                      id="resolutionNotes"
-                      value={resolutionNotes}
-                      onChange={(e) => setResolutionNotes(e.target.value)}
-                      placeholder="Add notes about the resolution..."
-                      rows={4}
-                      disabled={updating}
-                    />
-                  </div>
-
-                  <Button
-                    onClick={() => handleStatusChange(nce.status)}
+                {/* Status */}
+                <div>
+                  <Label htmlFor="status" className="mb-2 block">
+                    Current Status
+                  </Label>
+                  <Select
+                    value={nce.status}
+                    onValueChange={(value) => setNCE({...nce, status: value})}
                     disabled={updating}
-                    className="w-full"
-                    variant="outline"
                   >
-                    {updating ? "Saving..." : "Save Notes"}
-                  </Button>
-                </CardContent>
-              </Card>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="open">Open</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="resolved">Resolved</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Severity */}
+                <div>
+                  <Label htmlFor="severity" className="mb-2 block">
+                    Severity
+                  </Label>
+                  <Select
+                    value={nce.severity}
+                    onValueChange={(value) => setNCE({...nce, severity: value})}
+                    disabled={updating}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="critical">Critical</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Category */}
+                <div>
+                  <Label htmlFor="category" className="mb-2 block">
+                    Category
+                  </Label>
+                  <Input
+                    id="category"
+                    value={nce.category || ""}
+                    onChange={(e) => setNCE({...nce, category: e.target.value})}
+                    placeholder="Category"
+                    disabled={updating}
+                  />
+                </div>
+
+            
+
+                {/* Save Button */}
+                <Button
+                  onClick={() =>
+                    handleUpdateNCE({
+                      status: nce.status,
+                      severity: nce.severity,
+                      category: nce.category,
+                    })
+                  }
+                  disabled={updating}
+                  className="w-full"
+                  variant="outline"
+                >
+                  {updating ? "Saving..." : "Save"}
+                </Button>
+              </CardContent>
+            </Card>
+
             </div>
 
             {nce.resolution_notes && (

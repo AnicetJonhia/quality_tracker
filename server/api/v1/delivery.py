@@ -83,7 +83,7 @@ def get_delivery(
 @router.put("/{delivery_id}/status")
 def update_delivery_status(
     delivery_id: int,
-    new_status: DeliveryStatus,
+    status: DeliveryStatus,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -95,9 +95,9 @@ def update_delivery_status(
         raise HTTPException(status_code=404, detail="Delivery not found")
 
     old_status = delivery.status
-    delivery.status = new_status
+    delivery.status = status
 
-    if new_status == DeliveryStatus.APPROVED:
+    if status == DeliveryStatus.approved:
         delivery.delivered_at = datetime.utcnow()
 
     db.commit()
@@ -106,7 +106,7 @@ def update_delivery_status(
     notification = Notification(
         user_id=delivery.created_by,
         title="Delivery Status Updated",
-        message=f"Delivery '{delivery.title}' status changed from {old_status.value} to {new_status.value}",
+        message=f"Delivery '{delivery.title}' status changed from {old_status.value} to {status.value}",
         type="delivery_status",
         link=f"/deliveries/{delivery.id}"
     )

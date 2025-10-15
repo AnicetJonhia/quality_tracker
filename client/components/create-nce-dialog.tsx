@@ -26,7 +26,6 @@ export function CreateNCEDialog({ open, onOpenChange, onSuccess }: CreateNCEDial
   const [deliveryId, setDeliveryId] = useState("")
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
-  const [severity, setSeverity] = useState<"low" | "medium" | "high" | "critical">("medium")
   const [deliveries, setDeliveries] = useState<Delivery[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -55,13 +54,13 @@ export function CreateNCEDialog({ open, onOpenChange, onSuccess }: CreateNCEDial
       await api.createNCE({
         delivery_id: Number(deliveryId),
         title,
-        description,
-        severity,
+        description
+       
       })
       setDeliveryId("")
       setTitle("")
       setDescription("")
-      setSeverity("medium")
+      
       onSuccess()
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create NCE")
@@ -119,24 +118,7 @@ export function CreateNCEDialog({ open, onOpenChange, onSuccess }: CreateNCEDial
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="severity">Severity *</Label>
-            <Select
-              value={severity}
-              onValueChange={(value: "low" | "medium" | "high" | "critical") => setSeverity(value)}
-              disabled={loading}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="low">Low - Minor issue</SelectItem>
-                <SelectItem value="medium">Medium - Moderate impact</SelectItem>
-                <SelectItem value="high">High - Significant impact</SelectItem>
-                <SelectItem value="critical">Critical - Urgent attention required</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          
 
           {error && <div className="text-sm text-destructive">{error}</div>}
 

@@ -6,7 +6,7 @@ from db.base import Base
 
 class DeliveryStatus(str, enum.Enum):
     draft = "draft"
-    submitted = "submitted"
+    deliverd = "delivered"
     approved = "approved"
     rejected = "rejected"
 

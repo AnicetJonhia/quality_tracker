@@ -6,15 +6,13 @@ from db.base import Base
 
 class NCEStatus(str, enum.Enum):
     OPEN = "open"
-    IN_INVESTIGATION = "in_investigation"
-    IN_TREATMENT = "in_treatment"
+    IN_PROGRESS = "in_progress"
     RESOLVED = "resolved"
-    CLOSED = "closed"
+
 
 class NCESeverity(str, enum.Enum):
     LOW = "low"
     MEDIUM = "medium"
-    HIGH = "high"
     CRITICAL = "critical"
 
 class NCE(Base):
@@ -26,11 +24,12 @@ class NCE(Base):
     description = Column(Text, nullable=False)
     severity = Column(SQLEnum(NCESeverity), default=NCESeverity.MEDIUM, index=True)
     status = Column(SQLEnum(NCEStatus), default=NCEStatus.OPEN, index=True)
+    category = Column(Text)
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
     assigned_to = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
     resolved_at = Column(DateTime)
-    resolution_notes = Column(Text)
+    
 
     delivery = relationship("Delivery", back_populates="nces")
     created_by_user = relationship("User", foreign_keys=[created_by], back_populates="nces_created")
