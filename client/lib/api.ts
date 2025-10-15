@@ -1,4 +1,5 @@
-import { getAuthHeaders } from "./auth"
+import { get } from "http"
+import { getAuthHeaders , getAuthHeadersMultipart} from "./auth"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
 
@@ -40,6 +41,44 @@ export const api = {
     fetchAPI(`/api/deliveries/${id}/status?status=${status}`, {
       method: "PUT",
     }),
+
+
+  // --- FILES ---
+  uploadDeliveryFiles: async (deliveryId: number, files: File[]) => {
+    const formData = new FormData()
+    files.forEach((file) => formData.append("files", file))
+
+    const response = await fetch(`${API_BASE_URL}/api/deliveries/${deliveryId}/files/`, {
+      method: "POST",
+      headers: {
+        ...getAuthHeadersMultipart(), 
+      },
+      body: formData,
+    })
+
+    if (!response.ok) {
+      throw new Error(`File upload failed: ${response.statusText}`)
+    }
+
+    return response.json()
+  },
+
+  downloadDeliveryFile: async (deliveryId: number, fileId: number) => {
+    const res = await fetch(`${API_BASE_URL}/api/deliveries/${deliveryId}/files/${fileId}/download`, {
+      headers: getAuthHeaders(),  // token si nécessaire
+    })
+    if (!res.ok) throw new Error("Download failed")
+
+    const blob = await res.blob()
+    return blob
+  },
+
+  getDeliveryFiles: (deliveryId: number) =>
+    fetchAPI(`/api/deliveries/${deliveryId}/files/`),
+
+  deleteDeliveryFile: (deliveryId: number, fileId: number) =>
+    fetchAPI(`/api/deliveries/${deliveryId}/files/${fileId}`, { method: "DELETE" }),
+
 
   // NCEs
   getNCEs: () => fetchAPI("/api/nces"),

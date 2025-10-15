@@ -97,7 +97,7 @@ def update_delivery_status(
     old_status = delivery.status
     delivery.status = status
 
-    if status == DeliveryStatus.approved:
+    if status == DeliveryStatus.APPROVED:
         delivery.delivered_at = datetime.utcnow()
 
     db.commit()

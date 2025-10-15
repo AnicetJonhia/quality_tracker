@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
 from db.base import Base
 from db.session import engine
-from api.v1 import auth, user, nce, notification, delivery, project, survey, core
+from api.v1 import auth, user, nce, notification, delivery, project, survey, core, file
 
 
 
@@ -33,7 +33,8 @@ routers = [
     delivery.router,
     project.router,
     survey.router,
-    core.router
+    core.router,
+    file.router
 ]
 
 include_routers_with_prefix(app, routers)

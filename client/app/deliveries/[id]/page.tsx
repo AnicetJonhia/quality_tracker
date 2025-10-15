@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, FileText, AlertTriangle } from "lucide-react"
 import { api } from "@/lib/api"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import DeliveryFiles from "@/components/upload-file"
 
 interface Delivery {
   id: number
@@ -170,7 +171,7 @@ export default function DeliveryDetailPage() {
                   <CardDescription>Uploaded files for this delivery</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground">No files uploaded yet</p>
+                  <DeliveryFiles deliveryId={deliveryId} />
                 </CardContent>
               </Card>
 

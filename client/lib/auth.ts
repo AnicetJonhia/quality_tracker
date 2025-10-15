@@ -102,3 +102,12 @@ export function getAuthHeaders() {
     "Content-Type": "application/json",
   }
 }
+
+
+export function getAuthHeadersMultipart() {
+  const token = useAuthStore.getState().token
+  return {
+    Authorization: `Bearer ${token}`, 
+
+  }
+}
