@@ -73,6 +73,8 @@ export const api = {
     return blob
   },
 
+
+
   getDeliveryFiles: (deliveryId: number) =>
     fetchAPI(`/api/deliveries/${deliveryId}/files/`),
 
@@ -96,6 +98,17 @@ export const api = {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   }),
+
+  downloadNCEFile: async (nceId: number, fileId: number) => {
+    const res = await fetch(`${API_BASE_URL}/api/nces/${nceId}/files/${fileId}/download`, {
+      headers: getAuthHeaders(), // token si nécessaire
+    })
+    if (!res.ok) throw new Error("Download failed")
+
+    const blob = await res.blob()
+    return blob
+  },
+
 
 
   // Surveys

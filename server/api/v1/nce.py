@@ -1,5 +1,6 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException
+from models.file import File as FileModel
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from models.nce import NCE, NCEStatus, NCESeverity
 from schemas.nce import NCECreate, NCEResponse, NCEUpdate
@@ -10,37 +11,58 @@ from models.delivery import Delivery
 from models.notification import Notification
 from datetime import datetime
 from sqlalchemy import or_
+from fastapi.responses import FileResponse as FastAPIFileResponse
+import os
 
 router = APIRouter(prefix="/nces", tags=["nces"])
 
+UPLOAD_DIR = "uploads/nces"
+
 
 @router.post("/", response_model=NCEResponse)
-def create_nce(
-    nce: NCECreate,
+async def create_nce(
+    delivery_id: int = Form(...),
+    title: str = Form(...),
+    description: str = Form(...),
+    files: List[UploadFile] = File([]),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
 ):
     if current_user.role not in [UserRole.ADMIN, UserRole.QUALITY, UserRole.PRODUCER, UserRole.CLIENT]:
         raise HTTPException(status_code=403, detail="Not authorized")
 
-    new_nce = NCE(**nce.dict(), created_by=current_user.id)
+    # 1️⃣ Créer le NCE
+    new_nce = NCE(
+        delivery_id=delivery_id,
+        title=title,
+        description=description,
+        created_by=current_user.id
+    )
     db.add(new_nce)
     db.commit()
     db.refresh(new_nce)
 
-    delivery = db.query(Delivery).filter(Delivery.id == nce.delivery_id).first()
-    if delivery:
-        notification = Notification(
-            user_id=delivery.created_by,
-            title="New NCE Created",
-            message=f"NCE '{new_nce.title}' created for delivery '{delivery.title}'",
-            type="nce_created",
-            link=f"/nce/{new_nce.id}"
+    # 2️⃣ Sauvegarder les fichiers uploadés et lier au NCE
+    upload_folder = f"uploads/nces/{new_nce.id}"
+    os.makedirs(upload_folder, exist_ok=True)
+
+    for uploaded_file in files:
+        file_path = os.path.join(upload_folder, uploaded_file.filename)
+        with open(file_path, "wb") as f:
+            f.write(await uploaded_file.read())
+
+        file_record = FileModel(
+            filename=uploaded_file.filename,
+            storage_key=file_path.replace("\\", "/"),
+            nce_id=new_nce.id
         )
-        db.add(notification)
-        db.commit()
+        db.add(file_record)
+
+    db.commit()
 
     return new_nce
+
+
 
 @router.get("/", response_model=List[NCEResponse])
 def get_nces(
@@ -88,6 +110,9 @@ def get_nce(
 
     if current_user.role == UserRole.PRODUCER and nce.created_by != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
+
+
+    nce.files
 
     return nce
 
@@ -140,3 +165,40 @@ def update_nce(
     db.commit()
     
     return nce
+
+
+
+
+
+
+
+
+
+@router.get("/{nce_id}/files/{file_id}/download")
+def download_nce_file(
+    nce_id: int,
+    file_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    # 1️⃣ Récupérer le fichier
+    file = db.query(FileModel).filter(
+        FileModel.id == file_id,
+        FileModel.nce_id == nce_id
+    ).first()
+    
+    if not file:
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    # 2️⃣ Vérifier que le fichier existe physiquement
+    file_path = file.storage_key
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found on disk")
+    
+    # 3️⃣ Retourner le fichier avec FileResponse de FastAPI
+    
+    return FastAPIFileResponse(
+        path=file_path,
+        filename=file.filename,
+        media_type="application/octet-stream"  # force download
+    )

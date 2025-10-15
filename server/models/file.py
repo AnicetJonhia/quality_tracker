@@ -9,7 +9,7 @@ class File(Base):
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String, nullable=False)
     storage_key = Column(String, nullable=False)
-    delivery_id = Column(Integer, ForeignKey("deliveries.id"), nullable=False)
+    delivery_id = Column(Integer, ForeignKey("deliveries.id"), nullable=True)
     nce_id = Column(Integer, ForeignKey("nces.id"), nullable=True)
     uploaded_at = Column(DateTime, default=datetime.utcnow)
     is_receipt = Column(Boolean, default=False)

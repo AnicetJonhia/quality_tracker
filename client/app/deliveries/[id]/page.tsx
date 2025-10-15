@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, FileText, AlertTriangle } from "lucide-react"
 import { api } from "@/lib/api"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import DeliveryFiles from "@/components/upload-file"
+import DeliveryFiles from "@/components/delivery-file"
 
 interface Delivery {
   id: number

@@ -9,9 +9,16 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, AlertTriangle, AlertCircle, AlertOctagon, Info } from "lucide-react"
+import { ArrowLeft, Download,AlertTriangle, AlertCircle, AlertOctagon, Info } from "lucide-react"
 import { api } from "@/lib/api"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
+interface FileItem {
+  id: number
+  filename: string
+  storage_key: string
+  uploaded_at: string
+}
 
 interface NCE {
   id: number
@@ -23,7 +30,9 @@ interface NCE {
   category: string
   created_at: string
   resolved_at: string | null
+  files: FileItem[]  
 }
+
 
 const severityConfig = {
   low: { icon: Info, color: "bg-blue-500/10 text-blue-500 border-blue-500/20" },
@@ -61,6 +70,21 @@ export default function NCEDetailPage() {
     loadNCE()
   }, [nceId])
 
+
+
+  const handleDownload = async (fileId: number, filename: string) => {
+  try {
+    const blob = await api.downloadNCEFile(nceId, fileId)
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = filename
+    a.click()
+    window.URL.revokeObjectURL(url)
+  } catch (error) {
+    console.error("Download failed:", error)
+  }
+}
 
 
   const handleUpdateNCE = async (updates: {
@@ -169,6 +193,27 @@ export default function NCEDetailPage() {
                       <p className="text-sm text-foreground mt-1">{new Date(nce.resolved_at).toLocaleString()}</p>
                     </div>
                   )}
+
+                  {nce.files && nce.files.length > 0 && (
+                    <div>
+                      <span className="text-sm font-medium text-muted-foreground">Attachements</span>
+                      <ul className=" pl-4">
+                        {nce.files.map((file, index) => (
+                          <li key={file.id} className="text-sm text-foreground mt-1">
+                            <div
+                              className="flex items-center space-x-3 cursor-pointer"
+                              onClick={() => handleDownload(file.id, file.filename)}
+                            >
+                              <Download className="h-4 w-4 text-blue-500" />
+                              <span className="text-sm font-medium text-blue-600 hover:underline">
+                                {file.filename} 
+                              </span>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -257,18 +302,7 @@ export default function NCEDetailPage() {
 
             </div>
 
-            {nce.resolution_notes && (
-              <Card className="mt-6">
-                <CardHeader>
-                  <CardTitle>Resolution Notes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="rounded-lg bg-muted p-4">
-                    <p className="text-sm text-foreground whitespace-pre-wrap">{nce.resolution_notes}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            
           </div>
         </main>
       </div>

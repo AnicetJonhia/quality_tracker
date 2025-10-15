@@ -2,6 +2,8 @@ from pydantic import BaseModel
 from datetime import datetime
 from models.nce import NCEStatus, NCESeverity
 from typing import Optional
+from .file import FileResponse
+from typing import List
 
 class NCECreate(BaseModel):
     delivery_id: int
@@ -25,6 +27,7 @@ class NCEResponse(BaseModel):
     category: Optional[str] = None
     created_at: datetime
     resolved_at: Optional[datetime] = None
+    files: Optional[List[FileResponse]] = None
 
     class Config:
         from_attributes = True
