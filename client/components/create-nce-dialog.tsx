@@ -33,6 +33,8 @@ export function CreateNCEDialog({ open, onOpenChange, onSuccess }: CreateNCEDial
 
   useEffect(() => {
     if (open) loadDeliveries()
+    // clear error when opening
+    if (open) setError("")
   }, [open])
 
   const loadDeliveries = async () => {
@@ -40,18 +42,21 @@ export function CreateNCEDialog({ open, onOpenChange, onSuccess }: CreateNCEDial
       const data = await api.getDeliveries()
       setDeliveries(data)
     } catch (error) {
-      console.error("[v0] Failed to load deliveries:", error)
+      console.error("[CreateNCEDialog] Failed to load deliveries:", error)
     }
   }
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setFiles(Array.from(e.target.files))
+      // concat new files to existing (avoid duplication if needed)
+      setFiles((prev) => [...prev, ...Array.from(e.target.files)])
+      // reset input value so same file can be re-selected if needed
+      e.currentTarget.value = ""
     }
   }
 
   const removeFile = (index: number) => {
-    setFiles(files.filter((_, i) => i !== index))
+    setFiles((prev) => prev.filter((_, i) => i !== index))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -60,30 +65,26 @@ export function CreateNCEDialog({ open, onOpenChange, onSuccess }: CreateNCEDial
     setLoading(true)
 
     try {
-      // Crée un FormData pour multipart
-      const formData = new FormData()
-      formData.append("delivery_id", deliveryId)
-      formData.append("title", title)
-      formData.append("description", description)
-      files.forEach((file) => formData.append("files", file))
-
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/nces`, {
-        method: "POST",
-        headers: {
-          // token si nécessaire
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: formData,
+      // utilise la logique de la première version via api.createNCE
+      await api.createNCE({
+        delivery_id: Number(deliveryId),
+        title,
+        description,
+        files, // api.createNCE doit construire FormData et envoyer le token
       })
 
+      // reset
       setDeliveryId("")
       setTitle("")
       setDescription("")
       setFiles([])
 
       onSuccess()
+      onOpenChange(false)
     } catch (err) {
+      // lisible pour l'utilisateur
       setError(err instanceof Error ? err.message : "Failed to create NCE")
+      console.error("[CreateNCEDialog] createNCE error:", err)
     } finally {
       setLoading(false)
     }
@@ -142,9 +143,10 @@ export function CreateNCEDialog({ open, onOpenChange, onSuccess }: CreateNCEDial
             />
           </div>
 
-          {/* File upload */}
+          {/* File upload (styled + preview + remove) */}
           <div className="flex flex-col space-y-2">
             <Label htmlFor="file">Files</Label>
+
             <div className="flex items-center justify-between mb-2">
               <Label
                 htmlFor="file"
@@ -153,6 +155,7 @@ export function CreateNCEDialog({ open, onOpenChange, onSuccess }: CreateNCEDial
                 <Paperclip className="h-5 w-5 text-white" />
                 <span className="font-medium">Attach files</span>
               </Label>
+
               <Input
                 id="file"
                 type="file"
@@ -165,10 +168,13 @@ export function CreateNCEDialog({ open, onOpenChange, onSuccess }: CreateNCEDial
 
             {/* Aperçu fichiers */}
             {files.length > 0 && (
-              <ul className="space-y-1">
+              <ul className="space-y-1 max-h-48 overflow-auto">
                 {files.map((file, index) => (
                   <li key={index} className="flex items-center justify-between bg-gray-100 px-2 py-1 rounded">
-                    <span className="text-sm">{file.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm truncate max-w-xs">{file.name}</span>
+                      <span className="text-xs text-muted-foreground">{Math.round(file.size / 1024)} KB</span>
+                    </div>
                     <button
                       type="button"
                       className="text-red-500 hover:text-red-700"

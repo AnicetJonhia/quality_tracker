@@ -106,6 +106,7 @@ export function getAuthHeaders() {
 
 export function getAuthHeadersMultipart() {
   const token = useAuthStore.getState().token
+  console.log("token", token)
   return {
     Authorization: `Bearer ${token}`, 
 
