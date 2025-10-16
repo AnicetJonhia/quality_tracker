@@ -20,6 +20,12 @@ export async function fetchAPI(endpoint: string, options?: RequestInit) {
 }
 
 export const api = {
+
+  // Users
+  getClients: () => fetchAPI("/api/clients"),
+  //getUser: (id: number) => fetchAPI(`/api/users/${id}`),
+ 
+
   // Projects
   getProjects: () => fetchAPI("/api/projects"),
   getProject: (id: number) => fetchAPI(`/api/projects/${id}`),

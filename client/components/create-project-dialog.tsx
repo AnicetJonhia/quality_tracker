@@ -1,14 +1,19 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import type React from "react"
-
-import { useState } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { api } from "@/lib/api"
+
+interface User {
+  id: number
+  email: string
+  full_name?: string
+}
 
 interface CreateProjectDialogProps {
   open: boolean
@@ -19,9 +24,24 @@ interface CreateProjectDialogProps {
 export function CreateProjectDialog({ open, onOpenChange, onSuccess }: CreateProjectDialogProps) {
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
-  const [clientName, setClientName] = useState("")
+  const [clientId, setClientId] = useState<number | null>(null)
+  const [clientEmail, setClientEmail] = useState("")
+  const [clients, setClients] = useState<User[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+
+  // Charger la liste des clients depuis l'API
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        const data: User[] = await api.getClients()
+        setClients(data)
+      } catch (err) {
+        console.error("Failed to load clients", err)
+      }
+    }
+    fetchClients()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -29,14 +49,22 @@ export function CreateProjectDialog({ open, onOpenChange, onSuccess }: CreatePro
     setLoading(true)
 
     try {
+      console.log("sending projects :", {
+        name,
+        description: description || null,
+        client_id: clientId || null,
+        client_email: !clientId && clientEmail ? clientEmail : null
+      })
       await api.createProject({
         name,
         description: description || null,
-        client_name: clientName || null,
+        client_id: clientId || null,
+        client_email: !clientId && clientEmail ? clientEmail : null,
       })
       setName("")
       setDescription("")
-      setClientName("")
+      setClientId(null)
+      setClientEmail("")
       onSuccess()
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create project")
@@ -44,6 +72,8 @@ export function CreateProjectDialog({ open, onOpenChange, onSuccess }: CreatePro
       setLoading(false)
     }
   }
+
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -64,16 +94,46 @@ export function CreateProjectDialog({ open, onOpenChange, onSuccess }: CreatePro
               disabled={loading}
             />
           </div>
+
           <div className="space-y-2">
-            <Label htmlFor="clientName">Client Name</Label>
-            <Input
-              id="clientName"
-              value={clientName}
-              onChange={(e) => setClientName(e.target.value)}
-              placeholder="Acme Corporation"
+            <Label htmlFor="client">Client *</Label>
+            <select
+              id="client"
+              className="w-full border rounded p-2"
+              value={clientId || ""}
+              onChange={(e) => {
+                const val = e.target.value
+                if (val === "new") {
+                  setClientId(null)
+                } else {
+                  setClientId(Number(val))
+                  setClientEmail("")
+                }
+              }}
               disabled={loading}
-            />
+            >
+              <option value="">-- Select a client --</option>
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.full_name || c.email}
+                </option>
+              ))}
+              <option value="new">Create new client (enter email)</option>
+            </select>
+
+            {clientId === null && (
+              <Input
+                id="clientEmail"
+                type="email"
+                value={clientEmail}
+                onChange={(e) => setClientEmail(e.target.value)}
+                placeholder="client@example.com"
+                required
+                disabled={loading}
+              />
+            )}
           </div>
+
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
             <Textarea
@@ -85,6 +145,7 @@ export function CreateProjectDialog({ open, onOpenChange, onSuccess }: CreatePro
               disabled={loading}
             />
           </div>
+
           {error && <div className="text-sm text-destructive">{error}</div>}
           <div className="flex justify-end gap-3">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
