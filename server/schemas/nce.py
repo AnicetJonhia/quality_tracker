@@ -17,6 +17,9 @@ class NCEUpdate(BaseModel):
     severity: Optional[NCESeverity] = None
     category: Optional[str] = None
 
+
+
+
 class NCEResponse(BaseModel):
     id: int
     delivery_id: int

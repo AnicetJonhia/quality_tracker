@@ -8,22 +8,58 @@ from core.dependencies import get_current_user
 from models.user import User, UserRole
 from typing import Optional
 from sqlalchemy import or_
+from lib.email import send_magic_link_email
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
+
+
 @router.post("/", response_model=ProjectResponse)
 def create_project(
-    project: ProjectCreate,
+    project_in: ProjectCreate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    # Seuls les admins et quality peuvent créer un projet
     if current_user.role not in [UserRole.ADMIN, UserRole.QUALITY]:
         raise HTTPException(status_code=403, detail="Not authorized")
 
-    new_project = Project(**project.dict())
+    client_user: Optional[User] = None
+
+    # 1️⃣ Si client_id fourni, vérifier qu'il existe
+    if project_in.client_id:
+        client_user = db.query(User).filter(User.id == project_in.client_id, User.role == UserRole.CLIENT).first()
+        if not client_user:
+            raise HTTPException(status_code=404, detail="Client not found")
+
+    # 2️⃣ Sinon créer client via client_email si fourni
+    if not client_user and project_in.client_email:
+        email = project_in.client_email.lower()
+        client_user = db.query(User).filter(User.email == email).first()
+        if not client_user:
+            new_client = User(
+                email=email,
+                role=UserRole.CLIENT,
+                full_name=None,
+                hashed_password=None,
+                is_active=True
+            )
+            db.add(new_client)
+            db.commit()
+            db.refresh(new_client)
+            client_user = new_client
+
+            
+    # 3️⃣ Créer le projet
+    new_project = Project(
+        name=project_in.name,
+        description=project_in.description,
+        client_id=client_user.id if client_user else None
+    )
     db.add(new_project)
     db.commit()
     db.refresh(new_project)
+
     return new_project
 
 @router.get("/", response_model=List[ProjectResponse])

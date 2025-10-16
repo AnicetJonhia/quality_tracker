@@ -15,8 +15,8 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
-    full_name = Column(String, nullable=False)
-    hashed_password = Column(String, nullable=False)
+    full_name = Column(String, nullable=True)
+    hashed_password = Column(String, nullable=True)
     role = Column(SQLEnum(UserRole), default=UserRole.PRODUCER)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -27,3 +27,4 @@ class User(Base):
     nces_created = relationship("NCE", foreign_keys="NCE.created_by", back_populates="created_by_user")
     nces_assigned = relationship("NCE", foreign_keys="NCE.assigned_to", back_populates="assigned_to_user")
     notifications = relationship("Notification", back_populates="user")
+    projects = relationship("Project", back_populates="client")

@@ -8,6 +8,8 @@ class DeliveryCreate(BaseModel):
     title: str
     description: Optional[str] = None
 
+
+
 class DeliveryResponse(BaseModel):
     id: int
     project_id: int
@@ -20,3 +22,8 @@ class DeliveryResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+
+
+

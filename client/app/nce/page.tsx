@@ -39,6 +39,7 @@ export default function NCEPage() {
   const [nces, setNCEs] = useState<NCE[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
+  
 
   const loadNCEs = async () => {
     try {
@@ -59,6 +60,8 @@ export default function NCEPage() {
     setShowCreateDialog(false)
     loadNCEs()
   }
+
+  
 
   const openNCEs = nces.filter((nce) => nce.status === "open").length
   const inProgressNCEs = nces.filter((nce) => nce.status === "in_progress").length
