@@ -2,7 +2,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from models.delivery import Delivery, DeliveryStatus
-from schemas.delivery import DeliveryCreate, DeliveryResponse
+from schemas.delivery import DeliveryCreate, DeliveryResponse, DeliveryResponseWithProject
 from db.session import get_db
 from models.user import User, UserRole
 from core.dependencies import get_current_user
@@ -29,7 +29,7 @@ def create_delivery(
     db.refresh(new_delivery)
     return new_delivery
 
-@router.get("/", response_model=List[DeliveryResponse])
+@router.get("/", response_model=List[DeliveryResponseWithProject])
 def get_deliveries(
     skip: int = 0,
     limit: int = 100,
@@ -60,12 +60,12 @@ def get_deliveries(
         query = query.filter(Delivery.status == status_filter)
 
     if project_id:
-        query = query.filter(Delivery.project_id == project_id)
+        query = query.filter(Delivery.project.id == project_id)
 
     deliveries = query.order_by(Delivery.created_at.desc()).offset(skip).limit(limit).all()
     return deliveries
 
-@router.get("/{delivery_id}", response_model=DeliveryResponse)
+@router.get("/{delivery_id}", response_model=DeliveryResponseWithProject)
 def get_delivery(
     delivery_id: int,
     current_user: User = Depends(get_current_user),

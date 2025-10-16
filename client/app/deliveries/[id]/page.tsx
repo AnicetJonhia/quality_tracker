@@ -12,9 +12,24 @@ import { api } from "@/lib/api"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import DeliveryFiles from "@/components/delivery-file"
 
+interface Client {
+  id: number
+  full_name: string | null
+  email: string
+}
+
+
+interface Project {
+  id: number
+  name: string
+  description: string | null
+  client ?: Client
+  created_at: string
+}
+
 interface Delivery {
   id: number
-  project_id: number
+  project : Project
   title: string
   description: string | null
   status: string
@@ -121,8 +136,8 @@ export default function DeliveryDetailPage() {
                     <p className="text-sm text-foreground mt-1">{delivery.description || "No description provided"}</p>
                   </div>
                   <div>
-                    <span className="text-sm font-medium text-muted-foreground">Version</span>
-                    <p className="text-sm text-foreground mt-1">{delivery.version}</p>
+                    <span className="text-sm font-medium text-muted-foreground">Client</span>
+                    <p className="text-sm text-foreground mt-1">{delivery?.project?.client?.email}</p>
                   </div>
                   <div>
                     <span className="text-sm font-medium text-muted-foreground">Created</span>

@@ -10,11 +10,17 @@ import { api } from "@/lib/api"
 import Link from "next/link"
 import { CreateProjectDialog } from "@/components/create-project-dialog"
 
+
+interface Client {
+  id: number
+  full_name: string | null
+  email: string
+}
 interface Project {
   id: number
   name: string
   description: string | null
-  client_name: string | null
+  client ?: Client
   created_at: string
 }
 
@@ -83,8 +89,8 @@ export default function ProjectsPage() {
                           <FolderKanban className="h-5 w-5 text-primary" />
                           {project.name}
                         </CardTitle>
-                        {project.client_name && (
-                          <CardDescription className="text-xs">Client: {project.client_name}</CardDescription>
+                        {project.client && (
+                          <CardDescription className="text-xs">Client: {project.client.email}</CardDescription>
                         )}
                       </CardHeader>
                       <CardContent>

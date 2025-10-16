@@ -12,17 +12,23 @@ import { api } from "@/lib/api"
 import Link from "next/link"
 import { CreateDeliveryDialog } from "@/components/create-delivery-dialog"
 
+interface Client {
+  id: number
+  full_name: string | null
+  email: string
+}
+
 interface Project {
   id: number
   name: string
   description: string | null
-  client_name: string | null
+  client ?: Client
   created_at: string
 }
 
 interface Delivery {
   id: number
-  project_id: number
+  project : Project
   title: string
   description: string | null
   status: string
@@ -53,7 +59,7 @@ export default function ProjectDetailPage() {
       const [projectData, deliveriesData] = await Promise.all([api.getProject(projectId), api.getDeliveries()])
 
       setProject(projectData)
-      setDeliveries(deliveriesData.filter((d: Delivery) => d.project_id === projectId))
+      setDeliveries(deliveriesData.filter((d: Delivery) => d.project.id === projectId))
     } catch (error) {
       console.error("[v0] Failed to load project data:", error)
     } finally {
@@ -122,10 +128,10 @@ export default function ProjectDetailPage() {
                 <CardTitle>Project Details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {project.client_name && (
+                {project.client && (
                   <div>
                     <span className="text-sm font-medium text-muted-foreground">Client: </span>
-                    <span className="text-sm text-foreground">{project.client_name}</span>
+                    <span className="text-sm text-foreground">{project.client.email}</span>
                   </div>
                 )}
                 {project.description && (
@@ -181,7 +187,7 @@ export default function ProjectDetailPage() {
                       </CardHeader>
                       <CardContent>
                         <div className="flex items-center justify-between text-sm text-muted-foreground">
-                          <span>Version {delivery.version}</span>
+                          <span>Client :  {delivery?.project?.client?.email}</span>
                           <span>Created {new Date(delivery.created_at).toLocaleDateString()}</span>
                         </div>
                       </CardContent>
