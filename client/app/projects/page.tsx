@@ -11,18 +11,7 @@ import Link from "next/link"
 import { CreateProjectDialog } from "@/components/create-project-dialog"
 
 
-interface Client {
-  id: number
-  full_name: string | null
-  email: string
-}
-interface Project {
-  id: number
-  name: string
-  description: string | null
-  client ?: Client
-  created_at: string
-}
+import { Project } from "@/lib/type"
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([])

@@ -23,33 +23,7 @@ import {
   ResponsiveContainer,
 } from "recharts"
 
-interface DashboardStats {
-  total_deliveries: number
-  total_nces: number
-  open_nces: number
-  avg_nps: number
-  avg_csat: number
-}
-
-interface Delivery {
-  id: number
-  status: string
-  created_at: string
-}
-
-interface NCE {
-  id: number
-  severity: string
-  status: string
-  created_at: string
-}
-
-interface Survey {
-  id: number
-  survey_type: string
-  score: number | null
-  created_at: string
-}
+import { DashboardStats, Delivery, NCE, Survey } from "@/lib/type"
 
 const COLORS = {
   primary: "oklch(0.35 0.12 250)",

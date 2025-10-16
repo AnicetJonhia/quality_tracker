@@ -11,15 +11,7 @@ import { api } from "@/lib/api"
 import Link from "next/link"
 import { CreateNCEDialog } from "@/components/create-nce-dialog"
 
-interface NCE {
-  id: number
-  delivery_id: number
-  title: string
-  description: string
-  severity: string
-  status: string
-  created_at: string
-}
+import { NCE } from "@/lib/type"
 
 const severityConfig = {
   low: { icon: Info, color: "bg-blue-500/10 text-blue-500 border-blue-500/20" },

@@ -5,12 +5,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Paperclip, Trash, Download } from "lucide-react"
 
-interface FileItem {
-  id: number
-  filename: string
-  uploaded_at: string
-  storage_key: string
-}
+import { FileItem } from "@/lib/type"
 
 export default function DeliveryFiles({ deliveryId }: { deliveryId: number }) {
   const [files, setFiles] = useState<FileItem[]>([])

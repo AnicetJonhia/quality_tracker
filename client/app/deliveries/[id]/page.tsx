@@ -13,31 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import DeliveryFiles from "@/components/delivery-file"
 import { CreateNCEForDeliveryDialog } from "@/components/delivery/create-nce-for-delivery-dialog"
 
-interface Client {
-  id: number
-  full_name: string | null
-  email: string
-}
-
-
-interface Project {
-  id: number
-  name: string
-  description: string | null
-  client ?: Client
-  created_at: string
-}
-
-interface Delivery {
-  id: number
-  project : Project
-  title: string
-  description: string | null
-  status: string
-  version: number
-  created_at: string
-  delivered_at: string | null
-}
+import { Delivery } from "@/lib/type"
 
 
 

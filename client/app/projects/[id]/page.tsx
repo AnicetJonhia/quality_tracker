@@ -11,31 +11,7 @@ import { Plus, ArrowLeft, Package } from "lucide-react"
 import { api } from "@/lib/api"
 import Link from "next/link"
 import { CreateDeliveryDialog } from "@/components/create-delivery-dialog"
-
-interface Client {
-  id: number
-  full_name: string | null
-  email: string
-}
-
-interface Project {
-  id: number
-  name: string
-  description: string | null
-  client ?: Client
-  created_at: string
-}
-
-interface Delivery {
-  id: number
-  project : Project
-  title: string
-  description: string | null
-  status: string
-  version: number
-  created_at: string
-  delivered_at: string | null
-}
+import { Project,   Delivery } from "@/lib/type"
 
 const statusColors: Record<string, string> = {
   pending: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",

@@ -9,16 +9,8 @@ import { Badge } from "@/components/ui/badge"
 import { Plus, MessageSquare, Star, TrendingUp } from "lucide-react"
 import { api } from "@/lib/api"
 import { CreateSurveyDialog } from "@/components/create-survey-dialog"
+import { Survey } from "@/lib/type"
 
-interface Survey {
-  id: number
-  delivery_id: number
-  survey_type: string
-  score: number | null
-  comment: string | null
-  sent_at: string
-  completed_at: string | null
-}
 
 export default function SurveysPage() {
   const [surveys, setSurveys] = useState<Survey[]>([])

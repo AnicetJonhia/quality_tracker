@@ -14,25 +14,7 @@ import { api } from "@/lib/api"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { set } from "date-fns"
 
-interface FileItem {
-  id: number
-  filename: string
-  storage_key: string
-  uploaded_at: string
-}
-
-interface NCE {
-  id: number
-  delivery_id: number
-  title: string
-  description: string
-  severity: string
-  status: string
-  category: string
-  created_at: string
-  resolved_at: string | null
-  files: FileItem[]  
-}
+import { NCE } from "@/lib/type"
 
 
 const severityConfig = {
