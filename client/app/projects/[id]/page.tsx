@@ -143,7 +143,7 @@ export default function ProjectDetailPage() {
             ) : (
               <div className="space-y-4">
                 {deliveries.map((delivery) => (
-                  <Link key={delivery.id} href={`/deliveries/${delivery.id}`}>
+                  <Link key={delivery.id} href={`/deliveries/${delivery.id}`} className="block">
                     <Card className="hover:border-primary transition-colors cursor-pointer">
                       <CardHeader>
                         <div className="flex items-start justify-between">

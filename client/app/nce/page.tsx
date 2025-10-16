@@ -167,7 +167,7 @@ export default function NCEPage() {
                     "bg-gray-500/10 text-gray-500 border-gray-500/20"
 
                   return (
-                    <Link key={nce.id} href={`/nce/${nce.id}`}>
+                    <Link key={nce.id} href={`/nce/${nce.id}`} className="block">
                       <Card className="hover:border-primary transition-colors cursor-pointer">
                         <CardHeader>
                           <div className="flex items-start justify-between">

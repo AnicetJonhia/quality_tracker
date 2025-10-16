@@ -62,7 +62,8 @@ export default function DeliveryDetailPage() {
   const loadNCEs = async () => {
     try {
       const data = await api.getNCEs()
-      setNCEs(data)
+      const filtered = data.filter((nce: NCE) => nce.delivery_id === deliveryId)
+    setNCEs(filtered)
     } catch (error) {
       console.error("[v0] Failed to load NCEs:", error)
     }

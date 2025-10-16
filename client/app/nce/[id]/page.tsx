@@ -162,7 +162,7 @@ export default function NCEDetailPage() {
           </div>
 
           <div className="p-8">
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-6 lg:grid-cols-2">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
