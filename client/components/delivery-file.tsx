@@ -74,7 +74,7 @@ export default function DeliveryFiles({ deliveryId }: { deliveryId: number }) {
     <div className="p-4 bg-white rounded-md shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <Label
-            htmlFor="file"
+            htmlFor="file_delivery"
             className="flex flex-1 items-center justify-center cursor-pointer space-x-2 px-4 py-2 border  rounded-md bg-primary text-primary-foreground hover:bg-primary/90  transition-colors duration-200"
             >
             <Paperclip className="h-5 w-5 text-white" />
@@ -83,7 +83,7 @@ export default function DeliveryFiles({ deliveryId }: { deliveryId: number }) {
 
 
         <Input
-          id="file"
+          id="file_delivery"
           type="file"
           accept="image/*"
           multiple

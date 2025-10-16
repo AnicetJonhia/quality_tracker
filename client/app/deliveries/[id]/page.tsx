@@ -7,10 +7,11 @@ import { AuthGuard } from "@/components/auth-guard"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, FileText, AlertTriangle ,Send, Check, X} from "lucide-react"
+import { ArrowLeft, FileText, AlertTriangle ,Send, Check, X, Plus} from "lucide-react"
 import { api } from "@/lib/api"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import DeliveryFiles from "@/components/delivery-file"
+import { CreateNCEForDeliveryDialog } from "@/components/delivery/create-nce-for-delivery-dialog"
 
 interface Client {
   id: number
@@ -54,6 +55,7 @@ export default function DeliveryDetailPage() {
 
   const [delivery, setDelivery] = useState<Delivery | null>(null)
   const [loading, setLoading] = useState(true)
+  const [showCreateDialog, setShowCreateDialog] = useState(false)
 
   const loadDelivery = async () => {
     try {
@@ -69,6 +71,12 @@ export default function DeliveryDetailPage() {
   useEffect(() => {
     loadDelivery()
   }, [deliveryId])
+
+  
+  const handleNCECreated = () => {
+    setShowCreateDialog(false)
+    // loadNCEs() // plus tard
+  }
 
   const handleStatusChange = async (newStatus: string) => {
     try {
@@ -207,7 +215,7 @@ export default function DeliveryDetailPage() {
 
 
 
-            <div className="mt-6 grid gap-6 md:grid-cols-2">
+            <div className="mt-6 gap-6 ">
               
 
               <Card>
@@ -219,13 +227,22 @@ export default function DeliveryDetailPage() {
                   <CardDescription>Issues reported for this delivery</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground">No NCEs reported</p>
+                  <div className="flex items-center justify-between">
+                    <Button   onClick={() => setShowCreateDialog(true)} className="gap-2 flex-1">
+                                  <Plus className="h-4 w-4" />
+                                  Report Non-Conformity
+                     </Button>
+                  </div>
+                  
+
                 </CardContent>
               </Card>
             </div>
           </div>
         </main>
       </div>
+
+      <CreateNCEForDeliveryDialog deliveryId={deliveryId} open={showCreateDialog} onOpenChange={setShowCreateDialog} onSuccess={handleNCECreated} />
     </AuthGuard>
   )
 }

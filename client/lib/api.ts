@@ -98,12 +98,11 @@ export const api = {
     formData.append("description", data.description)
 
     if (data.files) {
-      data.files.forEach((file) => formData.append("files", file))
+      data.files.forEach((file) => formData.append("files", file, file.name))
     }
 
-    // log 
-    const entries = Array.from(formData.entries())
-    console.log(" entries ", entries)
+    
+
 
     const response = await fetch(`${API_BASE_URL}/api/nces`, {
       method: "POST",

@@ -9,9 +9,24 @@ import { Package } from "lucide-react"
 import { api } from "@/lib/api"
 import Link from "next/link"
 
+interface Client {
+  id: number
+  full_name: string | null
+  email: string
+}
+
+
+interface Project {
+  id: number
+  name: string
+  description: string | null
+  client ?: Client
+  created_at: string
+}
+
 interface Delivery {
   id: number
-  project_id: number
+  project : Project
   title: string
   description: string | null
   status: string
@@ -90,7 +105,7 @@ export default function DeliveriesPage() {
                       </CardHeader>
                       <CardContent>
                         <div className="flex items-center justify-between text-sm text-muted-foreground">
-                          <span>Version {delivery.version}</span>
+                          <span>Client {delivery?.project.client?.email}</span>
                           <span>Created {new Date(delivery.created_at).toLocaleDateString()}</span>
                         </div>
                       </CardContent>

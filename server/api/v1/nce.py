@@ -54,7 +54,8 @@ async def create_nce(
         file_record = FileModel(
             filename=uploaded_file.filename,
             storage_key=file_path.replace("\\", "/"),
-            nce_id=new_nce.id
+            nce_id=new_nce.id,
+            delivery_id=None 
         )
         db.add(file_record)
 

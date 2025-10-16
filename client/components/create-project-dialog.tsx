@@ -49,12 +49,7 @@ export function CreateProjectDialog({ open, onOpenChange, onSuccess }: CreatePro
     setLoading(true)
 
     try {
-      console.log("sending projects :", {
-        name,
-        description: description || null,
-        client_id: clientId || null,
-        client_email: !clientId && clientEmail ? clientEmail : null
-      })
+      
       await api.createProject({
         name,
         description: description || null,
