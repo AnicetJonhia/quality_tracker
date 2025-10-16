@@ -9,19 +9,27 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, FileText, AlertTriangle ,Send, Check, X, Plus} from "lucide-react"
 import { api } from "@/lib/api"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import Link from "next/link"
 import DeliveryFiles from "@/components/delivery-file"
 import { CreateNCEForDeliveryDialog } from "@/components/delivery/create-nce-for-delivery-dialog"
 
-import { Delivery } from "@/lib/type"
+import {NCE, Delivery } from "@/lib/type"
 
 
 
-const statusColors: Record<string, string> = {
+const statusDeliveryColors: Record<string, string> = {
   draft: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
   delivered: "bg-blue-500/10 text-blue-500 border-blue-500/20",
   approved: "bg-green-500/10 text-green-500 border-green-500/20",
   rejected: "bg-red-500/10 text-red-500 border-red-500/20",
+}
+
+
+const statusNCEColors: Record<string, string> = {
+  open: "bg-red-500/10 text-red-500 border-red-500/20",
+  in_progress: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+  resolved: "bg-green-500/10 text-green-500 border-green-500/20",
+
 }
 
 export default function DeliveryDetailPage() {
@@ -32,6 +40,7 @@ export default function DeliveryDetailPage() {
   const [delivery, setDelivery] = useState<Delivery | null>(null)
   const [loading, setLoading] = useState(true)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [nces, setNCEs] = useState<NCE[]>([]) 
 
   const loadDelivery = async () => {
     try {
@@ -48,10 +57,24 @@ export default function DeliveryDetailPage() {
     loadDelivery()
   }, [deliveryId])
 
-  
+
+
+  const loadNCEs = async () => {
+    try {
+      const data = await api.getNCEs()
+      setNCEs(data)
+    } catch (error) {
+      console.error("[v0] Failed to load NCEs:", error)
+    }
+  }
+
+  useEffect(() => {
+    loadNCEs()
+  }, [])
+
   const handleNCECreated = () => {
     setShowCreateDialog(false)
-    // loadNCEs() // plus tard
+    loadNCEs() 
   }
 
   const handleStatusChange = async (newStatus: string) => {
@@ -62,6 +85,7 @@ export default function DeliveryDetailPage() {
       console.error("[v0] Failed to update status:", error)
     }
   }
+
 
   if (loading) {
     return (
@@ -102,7 +126,7 @@ export default function DeliveryDetailPage() {
                 </Button>
                 <h2 className="text-2xl font-bold text-foreground">{delivery.title}</h2>
               </div>
-              <Badge className={statusColors[delivery.status] || ""} variant="outline">
+              <Badge className={statusDeliveryColors[delivery.status] || ""} variant="outline">
                 {delivery.status.replace("_", " ")}
               </Badge>
             </div>
@@ -195,24 +219,41 @@ export default function DeliveryDetailPage() {
               
 
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5" />
-                    Non-Conformities
-                  </CardTitle>
-                  <CardDescription>Issues reported for this delivery</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <Button   onClick={() => setShowCreateDialog(true)} className="gap-2 flex-1">
-                                  <Plus className="h-4 w-4" />
-                                  Report Non-Conformity
-                     </Button>
-                  </div>
-                  
+                  <CardHeader className="flex items-center gap-2 justify-between">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5" />
+                      <CardTitle>Non-Conformities</CardTitle>
+                    </div>
+                    <Button onClick={() => setShowCreateDialog(true)} className="gap-2 flex  items-center">
+                      <Plus className="h-4 w-4" /> Report Non-Conformity
+                    </Button>
+                  </CardHeader>
 
-                </CardContent>
-              </Card>
+                  <CardContent>
+                   
+                    {nces.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No non-conformities reported yet</p>
+                    ) : (
+                      <div className="space-y-2">
+                          {nces.map((nce) => (
+                            <Link key={nce.id} href={`/nce/${nce.id}`} className="block">
+                            
+                                <div className="flex justify-between items-center p-2 border rounded space-y-1">
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">{nce.title}</span>
+                                    <span className="text-xs text-muted-foreground">{nce.description}</span>
+                                  </div>
+                                  <Badge className={statusNCEColors[nce.status] || ""}>{nce.status}</Badge>
+                                </div>
+                          
+                            </Link>
+                          ))}
+                        </div>
+
+                    )}
+                  </CardContent>
+                </Card>
+
             </div>
           </div>
         </main>
