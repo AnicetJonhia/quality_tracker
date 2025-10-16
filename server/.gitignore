@@ -29,3 +29,7 @@ Thumbs.db
 # Python env variables
 .env
 .env.*
+
+
+# Uploaded files
+/uploads
