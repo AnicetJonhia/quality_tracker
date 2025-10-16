@@ -7,7 +7,7 @@ import { AuthGuard } from "@/components/auth-guard"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, FileText, AlertTriangle } from "lucide-react"
+import { ArrowLeft, FileText, AlertTriangle ,Send, Check, X} from "lucide-react"
 import { api } from "@/lib/api"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import DeliveryFiles from "@/components/delivery-file"
@@ -110,7 +110,7 @@ export default function DeliveryDetailPage() {
           </div>
 
           <div className="p-8">
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-6 lg:grid-cols-2">
               <Card>
                 <CardHeader>
                   <CardTitle>Delivery Information</CardTitle>
@@ -136,32 +136,7 @@ export default function DeliveryDetailPage() {
                   )}
                 </CardContent>
               </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Status Management</CardTitle>
-                  <CardDescription>Update the delivery status</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <span className="text-sm font-medium text-muted-foreground mb-2 block">Current Status</span>
-                    <Select value={delivery.status} onValueChange={handleStatusChange}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="draft">Draft</SelectItem>
-                        <SelectItem value="delivered">Delivered</SelectItem>
-                        <SelectItem value="approved">Approved</SelectItem>
-                        <SelectItem value="rejected">Rejected</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="mt-6 grid gap-6 md:grid-cols-2">
+              
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -174,6 +149,51 @@ export default function DeliveryDetailPage() {
                   <DeliveryFiles deliveryId={deliveryId} />
                 </CardContent>
               </Card>
+
+              
+            </div>
+
+           
+
+          <div className="mt-6 grid gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Status Management</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex gap-3">
+                  <Button
+                    className="flex-1 flex items-center justify-center"
+                    variant={delivery.status === "delivered" ? "default" : "outline"}
+                    onClick={() => handleStatusChange("delivered")}
+                  >
+                    <Send className="mr-2 h-4 w-4" /> Send to client
+                  </Button>
+
+                  <Button
+                    className="flex-1 flex items-center justify-center"
+                    variant={delivery.status === "approved" ? "default" : "outline"}
+                    onClick={() => handleStatusChange("approved")}
+                  >
+                    <Check className="mr-2 h-4 w-4" /> Approve
+                  </Button>
+
+                  <Button
+                    className="flex-1 flex items-center justify-center"
+                    variant={delivery.status === "rejected" ? "default" : "outline"}
+                    onClick={() => handleStatusChange("rejected")}
+                  >
+                    <X className="mr-2 h-4 w-4" /> Reject
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+        </div>
+
+
+
+            <div className="mt-6 grid gap-6 md:grid-cols-2">
+              
 
               <Card>
                 <CardHeader>

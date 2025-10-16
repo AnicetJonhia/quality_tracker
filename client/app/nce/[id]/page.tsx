@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { use, useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Sidebar } from "@/components/sidebar"
 import { AuthGuard } from "@/components/auth-guard"
@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { ArrowLeft, Download,AlertTriangle, AlertCircle, AlertOctagon, Info } from "lucide-react"
 import { api } from "@/lib/api"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { set } from "date-fns"
 
 interface FileItem {
   id: number
@@ -54,6 +55,7 @@ export default function NCEDetailPage() {
   const [nce, setNCE] = useState<NCE | null>(null)
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
+  const [deliveryTitle, setDeliveryTitle] = useState(null)
 
   const loadNCE = async () => {
     try {
@@ -71,7 +73,22 @@ export default function NCEDetailPage() {
   }, [nceId])
 
 
+  const loadDeliveryTitle = async (deliveryId: number) => {
+    try {
+      const data = await api.getDelivery(deliveryId)
+      setDeliveryTitle(data.title)
+    } catch (error) {
+      console.error("[v0] Failed to load delivery:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
+  useEffect(() => {
+    if (nce) {
+      loadDeliveryTitle(nce.delivery_id)
+    }
+  })
   const handleDownload = async (fileId: number, filename: string) => {
   try {
     const blob = await api.downloadNCEFile(nceId, fileId)
@@ -178,8 +195,8 @@ export default function NCEDetailPage() {
                   </div>
                   
                   <div>
-                    <span className="text-sm font-medium text-muted-foreground">Delivery ID</span>
-                    <p className="text-sm text-foreground mt-1">{nce.delivery_id}</p>
+                    <span className="text-sm font-medium text-muted-foreground">Delivery Title</span>
+                    <p className="text-sm text-foreground mt-1">{deliveryTitle || nce.delivery_id}</p>
                   </div>
                   <div>
                     <span className="text-sm font-medium text-muted-foreground">Reported</span>
