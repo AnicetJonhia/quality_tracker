@@ -190,7 +190,7 @@ export default function NCEPage() {
                         </CardHeader>
                         <CardContent>
                           <div className="flex items-center justify-between text-sm text-muted-foreground">
-                            <span>Delivery ID: {nce.delivery_id}</span>
+                            <span>Delivery {nce?.delivery.title}</span>
                             <span>Reported {new Date(nce.created_at).toLocaleDateString()}</span>
                           </div>
                         </CardContent>

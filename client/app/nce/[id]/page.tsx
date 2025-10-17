@@ -37,7 +37,6 @@ export default function NCEDetailPage() {
   const [nce, setNCE] = useState<NCE | null>(null)
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
-  const [deliveryTitle, setDeliveryTitle] = useState(null)
 
   const loadNCE = async () => {
     try {
@@ -55,22 +54,7 @@ export default function NCEDetailPage() {
   }, [nceId])
 
 
-  const loadDeliveryTitle = async (deliveryId: number) => {
-    try {
-      const data = await api.getDelivery(deliveryId)
-      setDeliveryTitle(data.title)
-    } catch (error) {
-      console.error("[v0] Failed to load delivery:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    if (nce) {
-      loadDeliveryTitle(nce.delivery_id)
-    }
-  })
+ 
   const handleDownload = async (fileId: number, filename: string) => {
   try {
     const blob = await api.downloadNCEFile(nceId, fileId)
@@ -178,7 +162,7 @@ export default function NCEDetailPage() {
                   
                   <div>
                     <span className="text-sm font-medium text-muted-foreground">Delivery Title</span>
-                    <p className="text-sm text-foreground mt-1">{deliveryTitle || nce.delivery_id}</p>
+                    <p className="text-sm text-foreground mt-1">{nce.delivery && nce.delivery.title}</p>
                   </div>
                   <div>
                     <span className="text-sm font-medium text-muted-foreground">Reported</span>
@@ -233,7 +217,7 @@ export default function NCEDetailPage() {
                     onValueChange={(value) => setNCE({...nce, status: value})}
                     disabled={updating}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -253,8 +237,9 @@ export default function NCEDetailPage() {
                     value={nce.severity}
                     onValueChange={(value) => setNCE({...nce, severity: value})}
                     disabled={updating}
+                    
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -276,6 +261,7 @@ export default function NCEDetailPage() {
                     onChange={(e) => setNCE({...nce, category: e.target.value})}
                     placeholder="Category"
                     disabled={updating}
+                    className="w-full"
                   />
                 </div>
 

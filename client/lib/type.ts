@@ -33,7 +33,7 @@ export interface FileItem {
 
 export interface NCE {
   id: number
-  delivery_id: number
+  delivery : Delivery
   title: string
   description: string
   severity: string

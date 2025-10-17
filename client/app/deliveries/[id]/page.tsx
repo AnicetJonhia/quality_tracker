@@ -62,7 +62,7 @@ export default function DeliveryDetailPage() {
   const loadNCEs = async () => {
     try {
       const data = await api.getNCEs()
-      const filtered = data.filter((nce: NCE) => nce.delivery_id === deliveryId)
+      const filtered = data.filter((nce: NCE) => nce?.delivery?.id === deliveryId)
     setNCEs(filtered)
     } catch (error) {
       console.error("[v0] Failed to load NCEs:", error)
@@ -244,7 +244,12 @@ export default function DeliveryDetailPage() {
                                     <span className="font-medium">{nce.title}</span>
                                     <span className="text-xs text-muted-foreground">{nce.description}</span>
                                   </div>
-                                  <Badge className={statusNCEColors[nce.status] || ""}>{nce.status}</Badge>
+                                  <div className="flex flex-col items-end">
+                                    <Badge className={statusNCEColors[nce.status] || ""}>{nce.status}</Badge>
+                                    <span className="text-xs text-muted-foreground">Attachements {nce?.files.length}</span>
+                                  </div>
+
+                                  
                                 </div>
                           
                             </Link>

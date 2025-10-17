@@ -19,7 +19,7 @@ router = APIRouter(prefix="/nces", tags=["nces"])
 UPLOAD_DIR = "uploads/nces"
 
 
-@router.post("/", response_model=NCEResponse)
+@router.post("/", response_model=NCECreate)
 async def create_nce(
     delivery_id: int = Form(...),
     title: str = Form(...),
