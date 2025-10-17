@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, model_validator
+from pydantic import BaseModel, EmailStr, model_validator, Field
 from typing import Optional
 from datetime import datetime
 from .user import UserInProjectResponse
@@ -7,7 +7,7 @@ class ProjectCreate(BaseModel):
     name: str
     description: Optional[str] = None
     client_id: Optional[int] = None
-    client_email: Optional[EmailStr] = None
+    client_email: Optional[EmailStr] = Field(None)
 
     @model_validator(mode="before")
     def check_client(cls, values):

@@ -142,7 +142,7 @@ export default function SurveysPage() {
                             )}
                             {survey.survey_type.toUpperCase()} Survey
                           </CardTitle>
-                          <CardDescription className="mt-1">Delivery ID: {survey.delivery_id}</CardDescription>
+                          <CardDescription className="mt-1">Delivery : {survey?.delivery?.title}</CardDescription>
                         </div>
                         <div className="flex flex-col items-end gap-2">
                           {survey.score !== null && (
@@ -161,18 +161,20 @@ export default function SurveysPage() {
                         </div>
                       </div>
                     </CardHeader>
-                    {survey.comment && (
+           
                       <CardContent>
-                        <div className="rounded-lg bg-muted p-3">
-                          <p className="text-sm text-foreground italic">"{survey.comment}"</p>
-                        </div>
+                        {survey.comment && (
+                          <div className="rounded-lg bg-muted p-3">
+                            <p className="text-sm text-foreground italic">"{survey.comment}"</p>
+                          </div>
+                        )}
                         <p className="text-xs text-muted-foreground mt-2">
                           {survey.completed_at
                             ? `Completed ${new Date(survey.completed_at).toLocaleDateString()}`
                             : `Sent ${new Date(survey.sent_at).toLocaleDateString()}`}
                         </p>
                       </CardContent>
-                    )}
+                  
                   </Card>
                 ))}
               </div>

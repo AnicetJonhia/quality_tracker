@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List
 from models.project import Project
@@ -6,9 +6,12 @@ from schemas.project import ProjectCreate, ProjectResponse
 from db.session import get_db
 from core.dependencies import get_current_user
 from models.user import User, UserRole
-from typing import Optional
-from sqlalchemy import or_
 from lib.email import send_magic_link_email
+from datetime import datetime
+from sqlalchemy import or_, desc, asc
+from typing import List, Optional
+
+
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -62,27 +65,54 @@ def create_project(
 
     return new_project
 
+
+
 @router.get("/", response_model=List[ProjectResponse])
 def get_projects(
-    skip: int = 0,
-    limit: int = 100,
-    search: Optional[str] = None,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(10, le=100),
+    search: Optional[str] = Query(None, description="Search by name or description"),
+    client_email: Optional[str] = Query(None, description="Filter by client email"),
+    start_date: Optional[datetime] = Query(None, description="Filter start date"),
+    end_date: Optional[datetime] = Query(None, description="Filter end date"),
+    sort_order: Optional[str] = Query("desc", description="Sort by creation date: asc or desc"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     query = db.query(Project)
 
+    # 🔍 Recherche texte (nom, description, client_name)
     if search:
         query = query.filter(
             or_(
-                Project.name.contains(search),
-                Project.description.contains(search),
-                Project.client_name.contains(search)
+                Project.name.ilike(f"%{search}%"),
+                Project.description.ilike(f"%{search}%"),
+                User.email.ilike(f"%{search}%"),
+                User.full_name.ilike(f"%{search}%")
             )
         )
 
+    # 📧 Filtrer par email du client
+    if client_email:
+        query = query.filter(User.email.ilike(f"%{client_email}%"))
+
+    # 🗓️ Filtrer par intervalle de date
+    if start_date:
+        query = query.filter(Project.created_at >= start_date)
+    if end_date:
+        query = query.filter(Project.created_at <= end_date)
+
+    # ↕️ Tri par date
+    if sort_order == "asc":
+        query = query.order_by(asc(Project.created_at))
+    else:
+        query = query.order_by(desc(Project.created_at))
+
+    # 📄 Pagination
     projects = query.offset(skip).limit(limit).all()
+
     return projects
+
 
 @router.get("/{project_id}", response_model=ProjectResponse)
 def get_project(

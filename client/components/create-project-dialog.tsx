@@ -9,11 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { api } from "@/lib/api"
 
-interface User {
-  id: number
-  email: string
-  full_name?: string
-}
+import {Client} from "@/lib/type"
 
 interface CreateProjectDialogProps {
   open: boolean
@@ -26,7 +22,7 @@ export function CreateProjectDialog({ open, onOpenChange, onSuccess }: CreatePro
   const [description, setDescription] = useState("")
   const [clientId, setClientId] = useState<number | null>(null)
   const [clientEmail, setClientEmail] = useState("")
-  const [clients, setClients] = useState<User[]>([])
+  const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
@@ -34,7 +30,8 @@ export function CreateProjectDialog({ open, onOpenChange, onSuccess }: CreatePro
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const data: User[] = await api.getClients()
+        const data: Client[] = await api.getClients()
+        console.log("clients : ", data)
         setClients(data)
       } catch (err) {
         console.error("Failed to load clients", err)
@@ -50,12 +47,18 @@ export function CreateProjectDialog({ open, onOpenChange, onSuccess }: CreatePro
 
     try {
       
-      await api.createProject({
+      const payload: any = {
         name,
-        description: description || null,
-        client_id: clientId || null,
-        client_email: !clientId && clientEmail ? clientEmail : null,
-      })
+        description: description || undefined,
+      }
+
+      if (clientId) payload.client_id = clientId
+      else if (clientEmail) payload.client_email = clientEmail
+
+      console.log("payload : ", payload)
+
+      await api.createProject(payload)
+
       setName("")
       setDescription("")
       setClientId(null)

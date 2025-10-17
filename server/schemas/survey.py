@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from datetime import datetime
 from models.survey import SurveyType
 from typing import Optional
-
+from .delivery import DeliveryResponseWithProject
 
 class SurveyCreate(BaseModel):
     delivery_id: int
@@ -12,7 +12,7 @@ class SurveyCreate(BaseModel):
 
 class SurveyResponse(BaseModel):
     id: int
-    delivery_id: int
+    delivery: DeliveryResponseWithProject
     survey_type: SurveyType
     score: Optional[int]
     comment: Optional[str]

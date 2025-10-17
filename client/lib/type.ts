@@ -46,7 +46,7 @@ export interface NCE {
 
 export interface Survey {
   id: number
-  delivery_id: number
+  delivery: Delivery
   survey_type: string
   score: number | null
   comment: string | null
