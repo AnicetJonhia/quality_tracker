@@ -18,6 +18,11 @@ import {
   PaginationNext,
   PaginationEllipsis,
 } from "@/components/ui/pagination"
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
+import { CalendarPopover } from "@/components/utils/calendar-popover"
+import { Input } from "@/components/ui/input"
+import { ClientEmailFilter } from "@/components/utils/client-email-filter"
+import { ProjectNameFilter } from "@/components/utils/project-name-filter"
 
 const statusColors: Record<string, string> = {
   draft: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
@@ -34,6 +39,7 @@ export default function DeliveriesPage() {
   const [ limit, setLimit ] = useState(4)
 
   // --- Filters ---
+  const [search, setSearch] = useState("")
   const [projectName, setProjectName] = useState("")
   const [clientEmail, setClientEmail] = useState("")
   const [status, setStatus] = useState("")
@@ -47,6 +53,7 @@ export default function DeliveriesPage() {
       const data = await api.getDeliveries({
         skip: Math.max(0, currentPage * limit),
         limit,
+        search: search || undefined,
         project_name: projectName,
         client_email: clientEmail,
         status_filter: status || undefined,
@@ -67,7 +74,7 @@ export default function DeliveriesPage() {
   useEffect(() => {
     setPage(0) // reset page when filters or sort change
     loadDeliveries(0)
-  }, [projectName, clientEmail, status, startDate, endDate, sortOrder])
+  }, [search, projectName, clientEmail, status, startDate, endDate, sortOrder])
 
   useEffect(() => {
     loadDeliveries(page)
@@ -90,52 +97,86 @@ export default function DeliveriesPage() {
           <div className="p-8 space-y-4">
             {/* --- Filters --- */}
             <div className="flex flex-wrap gap-4 mb-4">
-              <input
-                type="text"
-                placeholder="Project name..."
-                value={projectName}
-                onChange={(e) => setProjectName(e.target.value)}
-                className="input input-bordered"
-              />
-              <input
-                type="text"
-                placeholder="Client email..."
-                value={clientEmail}
-                onChange={(e) => setClientEmail(e.target.value)}
-                className="input input-bordered"
-              />
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className="input input-bordered"
-              >
-                <option value="">All statuses</option>
-                <option value="draft">Draft</option>
-                <option value="delivered">Delivered</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-              </select>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="input input-bordered"
-              />
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="input input-bordered"
-              />
-              {/* --- Sort order --- */}
-              <select
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
-                className="input input-bordered"
-              >
-                <option value="asc">Ascending</option>
-                <option value="desc">Descending</option>
-              </select>
+
+              {/* Search */}
+              <div className="flex-1 min-w-[200px]">
+                <Input
+                  type="text"
+                  placeholder="Search delivery..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+              
+
+              {/* Project Name Filter */}
+                <div className="flex-1 min-w-[200px]">
+                  <ProjectNameFilter value={projectName} onChange={setProjectName} />
+                </div>
+
+               {/* Client Email Filter */}
+                <div className="flex-1 min-w-[200px]">
+                  <ClientEmailFilter value={clientEmail} onChange={setClientEmail} />
+                </div>
+
+                
+              
+              
+              {/* --- Status Filter --- */}
+             
+              <div className="min-w-[180px] sm:flex-1 w-full">
+                  <Select 
+                  value={status || "all"} 
+                  onValueChange={(value) => setStatus(value === "all" ? "" : value)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="All statuses" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All statuses</SelectItem>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="delivered">Delivered</SelectItem>
+                      <SelectItem value="approved">Approved</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                    </SelectContent>
+                  </Select>
+              </div>
+
+              {/* Start Date */}
+              <div className="min-w-[160px] sm:flex-1 w-full">
+                <CalendarPopover
+                  selected={startDate ? new Date(startDate) : undefined}
+                  onSelect={(date) =>
+                    setStartDate(date ? date.toISOString().split("T")[0] : "")
+                  }
+                  placeholder="Start date"
+                />
+              </div>
+
+              {/* End Date */}
+              <div className="min-w-[160px] sm:flex-1 w-full">
+                  <CalendarPopover
+                    selected={endDate ? new Date(endDate) : undefined}
+                    onSelect={(date) =>
+                      setEndDate(date ? date.toISOString().split("T")[0] : "")
+                    }
+                    placeholder="End date"
+                  />
+              </div>
+             
+              {/* --- Sort Order --- */}
+              <div className="min-w-[180px] sm:flex-1 w-full">
+                <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as "asc" | "desc")}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Sort order" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="asc">Ascending</SelectItem>
+                    <SelectItem value="desc">Descending</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
             </div>
 
             {loading ? (

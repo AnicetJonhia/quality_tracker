@@ -38,7 +38,7 @@ export function ClientEmailFilter({
   const [totalClients, setTotalClients] = React.useState(0)
   const [query, setQuery] = React.useState("")
   const [page, setPage] = React.useState(0)
-  const limit = 15
+  const [limit, setLimit] = React.useState(6)
 
   // Charger les clients
   React.useEffect(() => {
@@ -92,7 +92,7 @@ export function ClientEmailFilter({
                   setOpen(false)
                 }}
               >
-                Reset the filter
+                All clients
                 <Check
                   className={cn("ml-auto", value === "" ? "opacity-100" : "opacity-0")}
                 />

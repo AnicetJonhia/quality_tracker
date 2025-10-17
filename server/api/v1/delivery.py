@@ -11,7 +11,7 @@ from models.notification import Notification
 from datetime import datetime, date
 
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 from sqlalchemy import or_, and_, func
 
 from schemas.delivery import DeliveryResponseWithProject
@@ -39,6 +39,9 @@ def create_delivery(
 
 
 
+
+
+
 @router.get("/", response_model=DeliveryResponseWithTotal)
 def get_deliveries(
     skip: int = 0,
@@ -47,22 +50,26 @@ def get_deliveries(
     status_filter: Optional[str] = None,
     project_name: Optional[str] = None,
     client_email: Optional[str] = None,
-    start_date: Optional[date] = Query(None, description="Filtrer à partir de cette date"),
-    end_date: Optional[date] = Query(None, description="Filtrer jusqu'à cette date"),
-    sort_by: Optional[str] = Query("created_at", description="Champ de tri"),
-    sort_order: Optional[str] = Query("desc", description="asc ou desc"),
+    start_date: Optional[date] = Query(None),
+    end_date: Optional[date] = Query(None),
+    sort_by: Optional[str] = Query("created_at"),
+    sort_order: Optional[str] = Query("desc"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     query = db.query(Delivery)
 
-    # Filtrage selon le rôle de l'utilisateur
+    # 🔹 Créer un seul alias pour Project et User
+    ProjectAlias = aliased(Project)
+    UserAlias = aliased(User)
+
+    # Filtrage selon le rôle
     if current_user.role == UserRole.PRODUCER:
         query = query.filter(Delivery.created_by == current_user.id)
     elif current_user.role == UserRole.CLIENT:
-        query = query.join(Project).filter(Project.client_id == current_user.id)
+        query = query.join(ProjectAlias).filter(ProjectAlias.client_id == current_user.id)
 
-    # Recherche textuelle
+    # Filtre textuel
     if search:
         query = query.filter(
             or_(
@@ -71,38 +78,32 @@ def get_deliveries(
             )
         )
 
-    # Filtrer par status
+    # Status
     if status_filter:
         query = query.filter(Delivery.status == status_filter)
 
-    # Filtrer par nom de projet
-    if project_name:
-        query = query.join(Project).filter(Project.name.ilike(f"%{project_name}%"))
-    
-    # Filtrer par email client
-    if client_email:
-        query = query.join(Project).join(User).filter(User.email.ilike(f"%{client_email}%"))
+    # 🔹 Joindre Project et User UNE seule fois si nécessaire
+    if project_name or client_email:
+        query = query.join(ProjectAlias, Delivery.project_id == ProjectAlias.id)
+        if client_email:
+            query = query.join(UserAlias, ProjectAlias.client_id == UserAlias.id)
 
-    # 🔹 Filtrage par date
-    if start_date and end_date:
-        query = query.filter(
-            and_(
-                func.date(Delivery.created_at) >= start_date,
-                func.date(Delivery.created_at) <= end_date
-            )
-        )
-    elif start_date:
+    if project_name:
+        query = query.filter(ProjectAlias.name.ilike(f"%{project_name}%"))
+    if client_email:
+        query = query.filter(UserAlias.email.ilike(f"%{client_email}%"))
+
+    # Filtrage par date
+    if start_date:
         query = query.filter(func.date(Delivery.created_at) >= start_date)
-    elif end_date:
+    if end_date:
         query = query.filter(func.date(Delivery.created_at) <= end_date)
 
-    # 🔹 Tri dynamique
+    # Tri
     sort_attr = getattr(Delivery, sort_by, Delivery.created_at)
     query = query.order_by(sort_attr.asc() if sort_order == "asc" else sort_attr.desc())
 
     total = query.count()
-
-    # Pagination
     deliveries = query.offset(skip).limit(limit).all()
     return DeliveryResponseWithTotal(total=total, deliveries=deliveries)
 
