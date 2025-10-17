@@ -40,7 +40,7 @@ export function CreateNCEDialog({ open, onOpenChange, onSuccess }: CreateNCEDial
   const loadDeliveries = async () => {
     try {
       const data = await api.getDeliveries()
-      setDeliveries(data)
+      setDeliveries(data.deliveries)
     } catch (error) {
       console.error("[CreateNCEDialog] Failed to load deliveries:", error)
     }

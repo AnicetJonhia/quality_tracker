@@ -36,7 +36,7 @@ export default function DeliveriesPage() {
   const [loading, setLoading] = useState(true)
   const [totalItems, setTotalItems] = useState(0)
   const [page, setPage] = useState<number>(0)
-  const [ limit, setLimit ] = useState(4)
+  const [ limit, setLimit ] = useState(3)
 
   // --- Filters ---
   const [search, setSearch] = useState("")

@@ -39,7 +39,7 @@ export function CreateSurveyDialog({ open, onOpenChange, onSuccess }: CreateSurv
   const loadDeliveries = async () => {
     try {
       const data = await api.getDeliveries()
-      setDeliveries(data)
+      setDeliveries(data.deliveries)
     } catch (error) {
       console.error("[v0] Failed to load deliveries:", error)
     }

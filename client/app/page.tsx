@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Package, AlertTriangle, TrendingUp, Star } from "lucide-react"
 import { api } from "@/lib/api"
 import Link from "next/link"
+import {RecentActivity} from "@/components/dashboard/recent-activity"
 
 export default function DashboardPage() {
   const [stats, setStats] = useState({
@@ -105,31 +106,7 @@ export default function DashboardPage() {
                       <CardTitle>Recent Activity</CardTitle>
                       <CardDescription>Latest updates from your platform</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div className="flex items-start gap-4">
-                          <div className="h-2 w-2 mt-2 rounded-full bg-primary" />
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-foreground">New delivery created</p>
-                            <p className="text-xs text-muted-foreground">Project Alpha - 2 hours ago</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-4">
-                          <div className="h-2 w-2 mt-2 rounded-full bg-accent" />
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-foreground">NCE resolved</p>
-                            <p className="text-xs text-muted-foreground">Building Site B - 5 hours ago</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-4">
-                          <div className="h-2 w-2 mt-2 rounded-full bg-primary" />
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-foreground">Survey completed</p>
-                            <p className="text-xs text-muted-foreground">Client feedback - 1 day ago</p>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
+                    <RecentActivity />
                   </Card>
 
                   <Card>

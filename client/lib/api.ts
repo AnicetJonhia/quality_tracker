@@ -1,6 +1,6 @@
 import { get } from "http"
 import { getAuthHeaders , getAuthHeadersMultipart} from "./auth"
-import {Project, GetProjectsParams, Client, Delivery,GetDeliveriesParams} from "@/lib/type"
+import {Project, GetProjectsParams, Client, Delivery,GetDeliveriesParams, GetActivitiesParams,Activity} from "@/lib/type"
 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
@@ -83,7 +83,7 @@ export const api = {
     const res = await fetchAPI(`/api/deliveries${query ? `?${query}` : ""}`)
     return res
   },
-  
+
   getDelivery: (id: number) => fetchAPI(`/api/deliveries/${id}`),
   createDelivery: (data: any) =>
     fetchAPI("/api/deliveries", {
@@ -196,4 +196,21 @@ export const api = {
 
   // Dashboard
   getDashboardStats: () => fetchAPI("/api/dashboard/stats"),
+  
+  getDashboardActivities: async (
+    params?: GetActivitiesParams
+  ): Promise<Activity[]> => {
+    const cleanParams: Record<string, string> = {}
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+          cleanParams[key] = String(value)
+        }
+      })
+    }
+
+    const query = new URLSearchParams(cleanParams).toString()
+    const res = await fetchAPI(`/api/dashboard/activities${query ? `?${query}` : ""}`)
+    return res
+  }
 }

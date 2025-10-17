@@ -86,3 +86,15 @@ export interface DashboardStats {
   avg_nps: number
   avg_csat: number
 }
+
+export type Activity = {
+  type: "delivery" | "nce" | "survey"
+  title: string
+  color: string
+  name: string
+  date: string
+}
+
+export type GetActivitiesParams = {
+  limit?: number
+}
