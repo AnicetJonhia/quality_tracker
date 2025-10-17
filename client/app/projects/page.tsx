@@ -5,6 +5,8 @@ import { Sidebar } from "@/components/sidebar"
 import { AuthGuard } from "@/components/auth-guard"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import {Input} from "@/components/ui/input"
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
 import { Plus, FolderKanban } from "lucide-react"
 import { api } from "@/lib/api"
 import Link from "next/link"
@@ -18,6 +20,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
+import {Label} from "@/components/ui/label"
+import { CalendarPopover } from "@/components/utils/calendar-popover"
 
 import { Project } from "@/lib/type"
 
@@ -83,47 +87,65 @@ export default function ProjectsPage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4 mb-4">
-            <input
+          <div className="p-8 flex flex-wrap items-center gap-2  ">
+          {/* Search */}
+          <div className="flex-1 min-w-[200px]">
+            <Input
               type="text"
               placeholder="Search projects..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="border rounded p-2"
+              className="w-full"
             />
+          </div>
 
-            <input
+          {/* Client Email Filter */}
+          <div className="flex-1 min-w-[200px] ">
+            <Input
               type="text"
               placeholder="Filter by client email..."
               value={clientFilter}
               onChange={(e) => setClientFilter(e.target.value)}
-              className="border rounded p-2"
+              className="w-full"
             />
-
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="border rounded p-2"
-            />
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="border rounded p-2"
-            />
-
-            <select
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
-              className="border rounded p-2"
-            >
-              <option value="desc">Newest first</option>
-              <option value="asc">Oldest first</option>
-            </select>
-
-           
           </div>
+
+          {/* Start Date */}
+          <div className="min-w-[160px] sm:flex-1 w-full">
+            <CalendarPopover
+              selected={startDate ? new Date(startDate) : undefined}
+              onSelect={(date) =>
+                setStartDate(date ? date.toISOString().split("T")[0] : "")
+              }
+              placeholder="Start date"
+            />
+          </div>
+
+          {/* End Date */}
+          <div className="min-w-[160px] sm:flex-1 w-full">
+            <CalendarPopover
+              selected={endDate ? new Date(endDate) : undefined}
+              onSelect={(date) =>
+                setEndDate(date ? date.toISOString().split("T")[0] : "")
+              }
+              placeholder="End date"
+            />
+          </div>
+
+          {/* Sort Order */}
+          <div className="min-w-[180px] sm:flex-1 w-full">
+            <Select value={sortOrder} onValueChange={setSortOrder}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Sort order" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="asc">Ascending</SelectItem>
+                <SelectItem value="desc">Descending</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
 
 
           <div className="p-8">
