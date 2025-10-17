@@ -12,7 +12,7 @@ class SurveyCreate(BaseModel):
 
 class SurveyResponse(BaseModel):
     id: int
-    delivery: DeliveryResponseWithProject
+    delivery: Optional[DeliveryResponseWithProject] = None
     survey_type: SurveyType
     score: Optional[int]
     comment: Optional[str]

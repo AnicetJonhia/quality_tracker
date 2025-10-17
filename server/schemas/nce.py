@@ -38,7 +38,7 @@ class NCEUpdate(BaseModel):
 
 class NCEResponse(BaseModel):
     id: int
-    delivery: DeliveryResponseWithProject
+    delivery: Optional[DeliveryResponseWithProject] = None
     title: str
     description: str
     severity: NCESeverity

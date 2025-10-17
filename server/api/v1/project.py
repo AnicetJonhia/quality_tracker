@@ -7,7 +7,7 @@ from db.session import get_db
 from core.dependencies import get_current_user
 from models.user import User, UserRole
 from lib.email import send_magic_link_email
-from datetime import datetime
+from datetime import datetime, date
 from sqlalchemy import or_, desc, asc
 from typing import List, Optional
 
@@ -67,21 +67,25 @@ def create_project(
 
 
 
+
 @router.get("/", response_model=List[ProjectResponse])
 def get_projects(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, le=100),
-    search: Optional[str] = Query(None, description="Search by name or description"),
+    search: Optional[str] = Query(None, description="Search by name, description, or client info"),
     client_email: Optional[str] = Query(None, description="Filter by client email"),
-    start_date: Optional[datetime] = Query(None, description="Filter start date"),
-    end_date: Optional[datetime] = Query(None, description="Filter end date"),
+    start_date: Optional[date] = Query(None, description="Filter start date"),
+    end_date: Optional[date] = Query(None, description="Filter end date"),
     sort_order: Optional[str] = Query("desc", description="Sort by creation date: asc or desc"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     query = db.query(Project)
 
-    # 🔍 Recherche texte (nom, description, client_name)
+    # 🔹 Joindre la table User si on veut filtrer ou rechercher par client
+    query = query.join(User, Project.client_id == User.id, isouter=True)
+
+    # 🔍 Recherche texte (nom, description, client email / full_name)
     if search:
         query = query.filter(
             or_(
@@ -96,14 +100,13 @@ def get_projects(
     if client_email:
         query = query.filter(User.email.ilike(f"%{client_email}%"))
 
-    # 🗓️ Filtrer par intervalle de date
     if start_date:
-        query = query.filter(Project.created_at >= start_date)
+        query = query.filter(Project.created_at >= datetime.combine(start_date, datetime.min.time()))
     if end_date:
-        query = query.filter(Project.created_at <= end_date)
+        query = query.filter(Project.created_at <= datetime.combine(end_date, datetime.max.time()))
 
     # ↕️ Tri par date
-    if sort_order == "asc":
+    if sort_order.lower() == "asc":
         query = query.order_by(asc(Project.created_at))
     else:
         query = query.order_by(desc(Project.created_at))
@@ -112,6 +115,8 @@ def get_projects(
     projects = query.offset(skip).limit(limit).all()
 
     return projects
+
+
 
 
 @router.get("/{project_id}", response_model=ProjectResponse)
