@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List
 from models.project import Project
-from schemas.project import ProjectCreate, ProjectResponse
+from schemas.project import ProjectCreate, ProjectResponse, ProjectsResponseWithTotal
 from db.session import get_db
 from core.dependencies import get_current_user
 from models.user import User, UserRole
@@ -68,7 +68,7 @@ def create_project(
 
 
 
-@router.get("/", response_model=List[ProjectResponse])
+@router.get("/", response_model=ProjectsResponseWithTotal)
 def get_projects(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, le=100),
@@ -111,10 +111,11 @@ def get_projects(
     else:
         query = query.order_by(desc(Project.created_at))
 
-    # 📄 Pagination
+    total = query.count()  # 🔹 Nombre total de projets filtrés
+
     projects = query.offset(skip).limit(limit).all()
 
-    return projects
+    return ProjectsResponseWithTotal(total=total, projects=projects)
 
 
 

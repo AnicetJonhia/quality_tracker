@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, model_validator, Field
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 from .user import UserInProjectResponse
 
@@ -26,6 +26,14 @@ class ProjectResponse(BaseModel):
     description: Optional[str]
     client: Optional[UserInProjectResponse] = None 
     created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ProjectsResponseWithTotal(BaseModel):
+    total: int
+    projects: List[ProjectResponse]
 
     class Config:
         from_attributes = True

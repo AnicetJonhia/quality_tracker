@@ -13,6 +13,17 @@ export interface Project {
   created_at: string
 }
 
+export interface GetProjectsParams {
+  skip?: number
+  limit?: number
+  search?: string
+  client_email?: string
+  start_date?: string 
+  end_date?: string
+  sort_order?: "asc" | "desc"
+}
+
+
 export interface Delivery {
   id: number
   project: Project

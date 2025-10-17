@@ -9,7 +9,15 @@ import { Plus, FolderKanban } from "lucide-react"
 import { api } from "@/lib/api"
 import Link from "next/link"
 import { CreateProjectDialog } from "@/components/create-project-dialog"
-
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
 
 import { Project } from "@/lib/type"
 
@@ -18,20 +26,42 @@ export default function ProjectsPage() {
   const [loading, setLoading] = useState(true)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
 
+
+  const [search, setSearch] = useState("")
+  const [clientFilter, setClientFilter] = useState("")
+  const [page, setPage] = useState(0)
+  const [limit, setLimit] = useState(6)
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
+  const [startDate, setStartDate] = useState<string>("")
+  const [endDate, setEndDate] = useState<string>("")
+
+  const [totalProjects, setTotalProjects] = useState(0)
+
   const loadProjects = async () => {
-    try {
-      const data = await api.getProjects()
-      setProjects(data)
-    } catch (error) {
-      console.error("[v0] Failed to load projects:", error)
-    } finally {
-      setLoading(false)
-    }
+  try {
+    setLoading(true)
+    const data = await api.getProjects({
+      skip: page * limit,
+      limit,
+      search: search || undefined,
+      client_email: clientFilter || undefined,
+      start_date: startDate || undefined,
+      end_date: endDate || undefined,
+      sort_order: sortOrder,
+    })
+    setProjects(data?.projects)
+    setTotalProjects(data?.total)
+  } catch (error) {
+    console.error("Failed to load projects:", error)
+  } finally {
+    setLoading(false)
   }
+}
 
   useEffect(() => {
     loadProjects()
-  }, [])
+  }, [page, search, clientFilter, startDate, endDate, sortOrder])
+
 
   const handleProjectCreated = () => {
     setShowCreateDialog(false)
@@ -52,6 +82,49 @@ export default function ProjectsPage() {
               </Button>
             </div>
           </div>
+
+          <div className="flex flex-wrap items-center gap-4 mb-4">
+            <input
+              type="text"
+              placeholder="Search projects..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="border rounded p-2"
+            />
+
+            <input
+              type="text"
+              placeholder="Filter by client email..."
+              value={clientFilter}
+              onChange={(e) => setClientFilter(e.target.value)}
+              className="border rounded p-2"
+            />
+
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="border rounded p-2"
+            />
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="border rounded p-2"
+            />
+
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
+              className="border rounded p-2"
+            >
+              <option value="desc">Newest first</option>
+              <option value="asc">Oldest first</option>
+            </select>
+
+           
+          </div>
+
 
           <div className="p-8">
             {loading ? (
@@ -96,6 +169,88 @@ export default function ProjectsPage() {
               </div>
             )}
           </div>
+
+          
+          {/* Pagination */}
+        <Pagination className="mt-6 flex justify-center">
+          <PaginationContent>
+            {/* Previous */}
+            <PaginationItem>
+              <PaginationPrevious
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault()
+                  if (page > 0) setPage(page - 1)
+                }}
+              />
+            </PaginationItem>
+
+            {/* Pages dynamiques */}
+            {(() => {
+              const totalPages = Math.ceil(totalProjects / limit)
+              const pages = []
+
+              // Plage de 3 pages visibles autour de la page courante
+              let start = Math.max(0, page - 1)
+              let end = Math.min(totalPages, start + 3)
+              if (end - start < 3) {
+                start = Math.max(0, end - 3)
+              }
+
+              // Ajouter "..." au début si nécessaire
+              if (start > 0) {
+                pages.push(
+                  <PaginationItem key="start-ellipsis">
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                )
+              }
+
+              // Ajouter les numéros de page
+              for (let i = start; i < end; i++) {
+                pages.push(
+                  <PaginationItem key={i}>
+                    <PaginationLink
+                      href="#"
+                      isActive={i === page}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        setPage(i)
+                      }}
+                    >
+                      {i + 1}
+                    </PaginationLink>
+                  </PaginationItem>
+                )
+              }
+
+              // Ajouter "..." si on n’est pas à la dernière page
+              if (end < totalPages) {
+                pages.push(
+                  <PaginationItem key="end-ellipsis">
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                )
+              }
+
+              return pages
+            })()}
+
+            {/* Next */}
+            <PaginationItem>
+              <PaginationNext
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault()
+                  setPage((prev) => Math.min(prev + 1, Math.ceil(totalProjects / limit) - 1))
+                }}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+
+
+
         </main>
       </div>
 

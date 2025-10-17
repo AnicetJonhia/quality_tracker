@@ -1,5 +1,7 @@
 import { get } from "http"
 import { getAuthHeaders , getAuthHeadersMultipart} from "./auth"
+import {Project, GetProjectsParams} from "@/lib/type"
+
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
 
@@ -27,7 +29,22 @@ export const api = {
  
 
   // Projects
-  getProjects: () => fetchAPI("/api/projects"),
+  
+  getProjects: async (params?: GetProjectsParams): Promise<Project[]> => {
+    // Supprimer toutes les clés undefined ou vides
+    const cleanParams: Record<string, string> = {}
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+          cleanParams[key] = String(value)
+        }
+      })
+    }
+    const query = new URLSearchParams(cleanParams).toString()
+    const res = await fetchAPI(`/api/projects${query ? `?${query}` : ""}`)
+    return res
+  },
+
   getProject: (id: number) => fetchAPI(`/api/projects/${id}`),
   createProject: (data: any) =>
     fetchAPI("/api/projects", {
