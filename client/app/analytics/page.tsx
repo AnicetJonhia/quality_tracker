@@ -57,7 +57,7 @@ export default function AnalyticsPage() {
         ])
 
         setStats(statsData)
-        setDeliveries(deliveriesData)
+        setDeliveries(deliveriesData.deliveries)
         setNCEs(ncesData)
         setSurveys(surveysData)
       } catch (error) {
@@ -93,7 +93,7 @@ export default function AnalyticsPage() {
     .filter((s) => s.score !== null)
     .reduce(
       (acc, survey) => {
-        const month = new Date(survey.created_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })
+        const month = new Date(survey.sent_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })
         const existing = acc.find((item) => item.month === month)
 
         if (existing) {
