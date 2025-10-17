@@ -3,7 +3,7 @@
 from datetime import datetime
 from models.user import  UserRole
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional, List
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -21,6 +21,12 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ClientResponse(BaseModel):
+    total : int
+    clients : List[UserResponse] = []
+
 
 class LoginRequest(BaseModel):
     email: EmailStr

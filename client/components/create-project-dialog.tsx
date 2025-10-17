@@ -31,8 +31,8 @@ export function CreateProjectDialog({ open, onOpenChange, onSuccess }: CreatePro
     const fetchClients = async () => {
       try {
         const data: Client[] = await api.getClients()
-        console.log("clients : ", data)
-        setClients(data)
+      
+        setClients(data.clients)
       } catch (err) {
         console.error("Failed to load clients", err)
       }

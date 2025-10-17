@@ -1,12 +1,12 @@
 
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List
 
 from db.session import get_db
 from models.user import User, UserRole
-from schemas.user import UserCreate, UserResponse
+from schemas.user import UserCreate, UserResponse, ClientResponse
 from core.dependencies import get_current_user
 from typing import List
 
@@ -61,15 +61,23 @@ def get_users(
     users = db.query(User).offset(skip).limit(limit).all()
     return users
 
-@router.get("/clients", response_model=List[UserResponse])
+
+@router.get("/clients", response_model=ClientResponse)
 def get_clients(
+    skip: int = Query(0, ge=0, description="Number of records to skip"),
+    limit: int = Query(20, ge=1, le=100, description="Number of records to return"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    # Vérification des rôles autorisés
     if current_user.role not in [UserRole.ADMIN, UserRole.QUALITY, UserRole.PRODUCER]:
         raise HTTPException(status_code=403, detail="Not authorized")
 
-    clients = db.query(User).filter(User.role == UserRole.CLIENT).all()
-    return clients
+    query = db.query(User).filter(User.role == UserRole.CLIENT)
+    total = query.count()  # Total clients pour la pagination si besoin
+
+    clients = query.offset(skip).limit(limit).all()
+    return ClientResponse(total=total, clients=clients)
+
 
 

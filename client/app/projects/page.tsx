@@ -20,7 +20,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
-import {Label} from "@/components/ui/label"
+import { ClientEmailFilter } from "@/components/utils/client-email-filter"
 import { CalendarPopover } from "@/components/utils/calendar-popover"
 
 import { Project } from "@/lib/type"
@@ -40,6 +40,7 @@ export default function ProjectsPage() {
   const [endDate, setEndDate] = useState<string>("")
 
   const [totalProjects, setTotalProjects] = useState(0)
+  
 
   const loadProjects = async () => {
   try {
@@ -100,15 +101,9 @@ export default function ProjectsPage() {
           </div>
 
           {/* Client Email Filter */}
-          <div className="flex-1 min-w-[200px] ">
-            <Input
-              type="text"
-              placeholder="Filter by client email..."
-              value={clientFilter}
-              onChange={(e) => setClientFilter(e.target.value)}
-              className="w-full"
-            />
-          </div>
+          <div className="flex-1 min-w-[200px]">
+          <ClientEmailFilter value={clientFilter} onChange={setClientFilter} />
+        </div>
 
           {/* Start Date */}
           <div className="min-w-[160px] sm:flex-1 w-full">
