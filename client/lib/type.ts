@@ -35,6 +35,20 @@ export interface Delivery {
   delivered_at: string | null
 }
 
+export interface GetDeliveriesParams {
+  skip?: number
+  limit?: number
+  search?: string
+  status_filter?: string
+  project_name?: string
+  client_email?: string
+  start_date?: string  
+  end_date?: string    
+  sort_by?: string
+  sort_order?: "asc" | "desc"
+}
+
+
 export interface FileItem {
   id: number
   filename: string

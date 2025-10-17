@@ -1,6 +1,6 @@
 import { get } from "http"
 import { getAuthHeaders , getAuthHeadersMultipart} from "./auth"
-import {Project, GetProjectsParams, Client} from "@/lib/type"
+import {Project, GetProjectsParams, Client, Delivery,GetDeliveriesParams} from "@/lib/type"
 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
@@ -69,7 +69,21 @@ export const api = {
     }),
 
   // Deliveries
-  getDeliveries: () => fetchAPI("/api/deliveries"),
+  getDeliveries: async (params?: GetDeliveriesParams): Promise<{ deliveries: Delivery[]; total_count: number }> => {
+    const cleanParams: Record<string, string> = {}
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+          cleanParams[key] = String(value)
+        }
+      })
+    }
+
+    const query = new URLSearchParams(cleanParams).toString()
+    const res = await fetchAPI(`/api/deliveries${query ? `?${query}` : ""}`)
+    return res
+  },
+  
   getDelivery: (id: number) => fetchAPI(`/api/deliveries/${id}`),
   createDelivery: (data: any) =>
     fetchAPI("/api/deliveries", {

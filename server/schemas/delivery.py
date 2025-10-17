@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 from models.delivery import DeliveryStatus
-from typing import Optional
+from typing import Optional, List
 from .project import ProjectResponse
 
 class DeliveryCreate(BaseModel):
@@ -40,3 +40,8 @@ class DeliveryResponseWithProject(BaseModel):
     
     class Config:
         from_attributes = True
+
+
+class DeliveryResponseWithTotal(BaseModel):
+    total: int
+    deliveries: List[DeliveryResponseWithProject] = []
