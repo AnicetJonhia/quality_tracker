@@ -55,7 +55,7 @@ export function CreateProjectDialog({ open, onOpenChange, onSuccess }: CreatePro
       if (clientId) payload.client_id = clientId
       else if (clientEmail) payload.client_email = clientEmail
 
-      console.log("payload : ", payload)
+      
 
       await api.createProject(payload)
 
