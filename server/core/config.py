@@ -6,7 +6,7 @@ class Settings:
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
 
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-change-in-production-8a4f2b9c1d3e5f6a")
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "QUALITY_TRAKCER")
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
