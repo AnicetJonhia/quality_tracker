@@ -30,18 +30,35 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
 
-  const loadData = async () => {
-    try {
-      const [projectData, deliveriesData] = await Promise.all([api.getProject(projectId), api.getDeliveries()])
+  const loadData = async (): Promise<void> => {
+  setLoading(true)
+  try {
+    // Load project and deliveries in parallel
+    const [projectResponse, deliveriesResponse] = await Promise.all([
+      api.getProject(projectId),
+      api.getDeliveries(),
+    ])
 
-      setProject(projectData)
-      setDeliveries(deliveriesData.filter((d: Delivery) => d.project.id === projectId))
-    } catch (error) {
-      console.error("[v0] Failed to load project data:", error)
-    } finally {
-      setLoading(false)
+    // Basic validation
+    if (!projectResponse || !deliveriesResponse) {
+      throw new Error("No data received from the server")
     }
+
+    // Filter deliveries related to the current project
+    const projectDeliveries = deliveriesResponse.deliveries?.filter(
+      (delivery: Delivery) => delivery.project?.id === projectId
+    ) ?? []
+
+    // Update state
+    setProject(projectResponse)
+    setDeliveries(projectDeliveries)
+  } catch (error) {
+    console.error("[loadData] Failed to load project data:", error)
+  } finally {
+    setLoading(false)
   }
+}
+
 
   useEffect(() => {
     loadData()

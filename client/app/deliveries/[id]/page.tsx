@@ -65,7 +65,7 @@ export default function DeliveryDetailPage() {
       const filtered = data.filter((nce: NCE) => nce?.delivery?.id === deliveryId)
     setNCEs(filtered)
     } catch (error) {
-      console.error("[v0] Failed to load NCEs:", error)
+      console.error(" Failed to load NCEs:", error)
     }
   }
 
@@ -83,7 +83,7 @@ export default function DeliveryDetailPage() {
       await api.updateDeliveryStatus(deliveryId, newStatus)
       loadDelivery()
     } catch (error) {
-      console.error("[v0] Failed to update status:", error)
+      console.error(" Failed to update status:", error)
     }
   }
 
