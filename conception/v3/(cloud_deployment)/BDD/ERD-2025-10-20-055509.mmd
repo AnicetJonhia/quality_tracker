@@ -1,0 +1,110 @@
+---
+config:
+  look: neo
+  theme: mc
+  layout: elk
+---
+classDiagram
+direction TB
+    class USER {
+	    +uuid id "PK"
+	    +varchar email "UNIQUE"
+	    +text hashed_password
+	    +enum role "Admin,Quality,Producer,Client"
+	    +boolean is_active
+	    +timestamp created_at
+	    +timestamp updated_at
+    }
+    class PROJECT {
+	    +uuid id "PK"
+	    +varchar name
+	    +text description
+	    +uuid client_id "FK USER.id"
+	    +timestamp created_at
+	    +timestamp updated_at
+    }
+    class DELIVERY {
+	    +uuid id "PK"
+	    +uuid project_id "FK PROJECT.id"
+	    +varchar title
+	    +text description
+	    +enum status "DRAFT,DELIVERED,APPROVED,REJECTED"
+	    +varchar version
+	    +uuid created_by "FK USER.id"
+	    +timestamp created_at
+	    +timestamp delivered_at
+    }
+    class FILE {
+	    +uuid id "PK"
+	    +varchar filename
+	    +varchar storage_key
+	    +uuid delivery_id "FK DELIVERY.id"
+	    +uuid nce_id "FK NCE.id NULL"
+	    +boolean is_receipt
+	    +timestamp uploaded_at
+    }
+    class NCE {
+	    +uuid id "PK"
+	    +uuid delivery_id "FK DELIVERY.id"
+	    +varchar title
+	    +text description
+	    +enum category "Precision,Coherence,Omission"
+	    +enum severity "Minor,Major,Critical"
+	    +enum status "OPEN,IN_PROGRESS,CLOSED"
+	    +uuid created_by "FK USER.id"
+	    +uuid assigned_to "FK USER.id NULL"
+	    +timestamp created_at
+	    +timestamp resolved_at
+    }
+    class NOTIFICATION {
+	    +uuid id "PK"
+	    +uuid user_id "FK USER.id"
+	    +varchar title
+	    +text message
+	    +enum type "DELIVERY,REMINDER,ALERT"
+	    +boolean is_read
+	    +timestamp created_at
+	    +varchar link
+    }
+    class SURVEY {
+	    +uuid id "PK"
+	    +uuid delivery_id "FK DELIVERY.id"
+	    +uuid user_id "FK USER.id"
+	    +enum survey_type "NPS,CSAT"
+	    +smallint score
+	    +text comment
+	    +timestamp sent_at
+	    +timestamp completed_at
+    }
+    class EMAIL_TOKEN {
+	    +uuid id "PK"
+	    +varchar token "UNIQUE"
+	    +varchar email
+	    +enum purpose "DELIVERY_ACCESS,INVITE,PASSWORD_RESET"
+	    +uuid resource_id "FK DELIVERY.id"
+	    +timestamp expires_at
+    }
+    class AUDIT_LOG {
+	    +uuid id "PK"
+	    +varchar entity
+	    +uuid entity_id
+	    +varchar action
+	    +varchar actor_email
+	    +text details
+	    +timestamp created_at
+    }
+
+    USER "1" --> "0..*" PROJECT : owns
+    USER "1" --> "0..*" DELIVERY : creates
+    USER "1" --> "0..*" NCE : creates
+    USER "1" --> "0..*" NCE : assigned_to
+    USER "1" --> "0..*" NOTIFICATION : receives
+    USER "1" --> "0..*" SURVEY : answers
+    USER "1" --> "0..*" AUDIT_LOG : logs
+    PROJECT "1" --> "0..*" DELIVERY : has
+    DELIVERY "1" --> "0..*" FILE : includes
+    DELIVERY "1" --> "0..*" NCE : reports
+    DELIVERY "1" --> "0..*" NOTIFICATION : triggers
+    DELIVERY "1" --> "0..*" SURVEY : evaluates
+    DELIVERY "1" --> "0..*" EMAIL_TOKEN : linked_via_token
+    NCE "1" --> "0..*" FILE : attachments
