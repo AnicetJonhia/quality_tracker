@@ -1,11 +1,13 @@
 from typing import List, Optional
 from models.file import File as FileModel
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form,Query
 from models.nce import NCE, NCEStatus, NCESeverity
-from schemas.nce import NCECreate, NCEResponse, NCEUpdate
+from schemas.nce import NCECreate, NCEResponse, NCEUpdate, NCEResponseWithTotal
 from db.session import get_db
 from models.user import User, UserRole
+from models.delivery import Delivery
+from models.project import Project
+
 from core.dependencies import get_current_user
 from models.delivery import Delivery
 from models.notification import Notification
@@ -13,6 +15,12 @@ from datetime import datetime
 from sqlalchemy import or_
 from fastapi.responses import FileResponse as FastAPIFileResponse
 import os
+from datetime import date
+from sqlalchemy.orm import Session, aliased
+from sqlalchemy import or_, func
+
+
+
 
 router = APIRouter(prefix="/nces", tags=["nces"])
 
@@ -65,39 +73,94 @@ async def create_nce(
 
 
 
-@router.get("/", response_model=List[NCEResponse])
+
+
+
+
+
+@router.get("/", response_model=NCEResponseWithTotal)
 def get_nces(
     skip: int = 0,
     limit: int = 100,
     search: Optional[str] = None,
     status_filter: Optional[NCEStatus] = None,
     severity_filter: Optional[NCESeverity] = None,
+    category: Optional[str] = None,
+    delivery_title: Optional[str] = None,
+    project_name: Optional[str] = None,
+    client_email: Optional[str] = None,
+    start_date: Optional[date] = Query(None),
+    end_date: Optional[date] = Query(None),
+    sort_by: Optional[str] = Query("created_at"),
+    sort_order: Optional[str] = Query("desc"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     query = db.query(NCE)
 
+    # 🔹 Aliases
+    DeliveryAlias = aliased(Delivery)
+    ProjectAlias = aliased(Project)
+    UserAlias = aliased(User)
+
+    # 🔹 Filtrage par rôle
     if current_user.role == UserRole.PRODUCER:
         query = query.filter(NCE.created_by == current_user.id)
     elif current_user.role == UserRole.CLIENT:
-        query = query.filter(NCE.created_by == current_user.id)
+        query = (
+            query.join(DeliveryAlias)
+            .join(ProjectAlias)
+            .filter(ProjectAlias.client_id == current_user.id)
+        )
 
+    # 🔹 Recherche textuelle
     if search:
         query = query.filter(
             or_(
-                NCE.title.contains(search),
-                NCE.description.contains(search)
+                NCE.title.ilike(f"%{search}%"),
+                NCE.description.ilike(f"%{search}%")
             )
         )
 
+    # 🔹 Filtres de statut, sévérité, catégorie
     if status_filter:
         query = query.filter(NCE.status == status_filter)
-
     if severity_filter:
         query = query.filter(NCE.severity == severity_filter)
+    if category:
+        query = query.filter(NCE.category.ilike(f"%{category}%"))
 
-    nces = query.order_by(NCE.created_at.desc()).offset(skip).limit(limit).all()
-    return nces
+    # 🔹 Joindre pour filtrer par titre de livraison ou projet
+    if delivery_title or project_name:
+        query = query.join(DeliveryAlias, NCE.delivery_id == DeliveryAlias.id)
+        if project_name:
+            query = query.join(ProjectAlias, DeliveryAlias.project_id == ProjectAlias.id)
+
+    if delivery_title:
+        query = query.filter(DeliveryAlias.title.ilike(f"%{delivery_title}%"))
+    if project_name:
+        query = query.filter(ProjectAlias.name.ilike(f"%{project_name}%"))
+    if client_email:
+        query = query.filter(UserAlias.email.ilike(f"%{client_email}%"))  # 👈 Filtre ajouté ici
+
+
+    # 🔹 Filtrage par date
+    if start_date:
+        query = query.filter(func.date(NCE.created_at) >= start_date)
+    if end_date:
+        query = query.filter(func.date(NCE.created_at) <= end_date)
+
+    # 🔹 Tri dynamique
+    sort_attr = getattr(NCE, sort_by, NCE.created_at)
+    query = query.order_by(sort_attr.asc() if sort_order == "asc" else sort_attr.desc())
+
+    total = query.count()
+    # 🔹 Pagination
+    nces = query.offset(skip).limit(limit).all()
+
+    return NCEResponseWithTotal(total=total, nces=nces)
+
+
 
 @router.get("/{nce_id}", response_model=NCEResponse)
 def get_nce(

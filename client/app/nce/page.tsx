@@ -12,6 +12,21 @@ import Link from "next/link"
 import { CreateNCEDialog } from "@/components/create-nce-dialog"
 
 import { NCE } from "@/lib/type"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationEllipsis,
+} from "@/components/ui/pagination"
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
+import { CalendarPopover } from "@/components/utils/calendar-popover"
+import { Input } from "@/components/ui/input"
+import { ClientEmailFilter } from "@/components/utils/client-email-filter"
+import { ProjectNameFilter } from "@/components/utils/project-name-filter"
+
 
 const severityConfig = {
   low: { icon: Info, color: "bg-blue-500/10 text-blue-500 border-blue-500/20" },
@@ -31,22 +46,58 @@ export default function NCEPage() {
   const [nces, setNCEs] = useState<NCE[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
+
+  const [totalItems, setTotalItems] = useState(0)
+  const [page, setPage] = useState<number>(0)
+  const [ limit, setLimit ] = useState(3)
+
+  const [search, setSearch] = useState("")
+  const [projectName, setProjectName] = useState("")
+  const [clientEmail, setClientEmail] = useState("")
+  const [deliveryTitle,setDeliveryTitle] = useState("")
+  const [status, setStatus] = useState("")
+  const [category,setCategory] = useState("")
+  const [severity,setSeverity] = useState("")
+  const [startDate, setStartDate] = useState<string | undefined>()
+  const [endDate, setEndDate] = useState<string | undefined>()
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
+
   
 
-  const loadNCEs = async () => {
-    try {
-      const data = await api.getNCEs()
-      setNCEs(data)
-    } catch (error) {
-      console.error("[v0] Failed to load NCEs:", error)
-    } finally {
-      setLoading(false)
-    }
+  const loadNCEs = async (currentPage: number = 0) => {
+  setLoading(true)
+  try {
+    const data = await api.getNCEs({
+      skip: Math.max(0, currentPage * limit),
+      limit,
+      search: search || undefined,
+      status_filter: status || undefined,
+      severity_filter: severity || undefined,
+      category: category || undefined,
+      delivery_title: deliveryTitle || undefined,
+      project_name: projectName || undefined,
+      client_email: clientEmail || undefined,
+      start_date: startDate || undefined,
+      end_date: endDate || undefined,
+      sort_by: "created_at",
+      sort_order: sortOrder || "desc",
+    })
+    setNCEs(data.nces)
+    setTotalItems(data.total)
+  } catch (error) {
+    console.error(" Failed to load NCEs:", error)
+  } finally {
+    setLoading(false)
   }
+}
 
-  useEffect(() => {
-    loadNCEs()
-  }, [])
+
+
+
+
+useEffect(() => {
+  loadNCEs(page)
+}, [search,page, status, severity, category, deliveryTitle, projectName, startDate, endDate, sortOrder])
 
   const handleNCECreated = () => {
     setShowCreateDialog(false)
@@ -54,6 +105,7 @@ export default function NCEPage() {
   }
 
   
+  const totalPages = Math.ceil(totalItems / limit) 
 
   const openNCEs = nces.filter((nce) => nce.status === "open").length
   const inProgressNCEs = nces.filter((nce) => nce.status === "in_progress").length
@@ -126,6 +178,118 @@ export default function NCEPage() {
               </Card>
             </div>
 
+            {/* --- Filters --- */}
+                <div className="flex flex-wrap gap-4 mb-4">
+    
+                  {/* Search */}
+                  <div className="flex-1 min-w-[200px]">
+                    <Input
+                      type="text"
+                      placeholder="Search NCE..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="w-full"
+                    />
+                  </div>
+                  
+    
+                  {/* Project Name Filter */}
+                    <div className="flex-1 min-w-[200px]">
+                      <ProjectNameFilter value={projectName} onChange={setProjectName} />
+                    </div>
+    
+                    {/* Client Email Filter */}
+                    <div className="flex-1 min-w-[200px]">
+                      <ClientEmailFilter value={clientEmail} onChange={setClientEmail} />
+                    </div>
+    
+                  {/* Delivery */}
+                  <div className="flex-1 min-w-[200px]">
+                    <Input
+                      type="text"
+                      placeholder="DeliveryTitle..."
+                      value={search}
+                      onChange={(e) => setDeliveryTitle(e.target.value)}
+                      className="w-full"
+                    />
+                  </div>
+                  
+                  
+                  {/* --- Status Filter --- */}
+                  
+                  <div className="min-w-[180px] sm:flex-1 w-full">
+                      <Select 
+                      value={status || "all"} 
+                      onValueChange={(value) => setStatus(value === "all" ? "" : value)}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="All statuses" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All statuses</SelectItem>
+                          <SelectItem value="open">Open</SelectItem>
+                          <SelectItem value="in_progress">In Progress</SelectItem>
+                          <SelectItem value="resolved">Resolved</SelectItem>
+                          
+                        </SelectContent>
+                      </Select>
+                  </div>
+
+                  {/* --- Severity Filter --- */}
+                  
+                  <div className="min-w-[180px] sm:flex-1 w-full">
+                      <Select 
+                      value={status || "all"} 
+                      onValueChange={(value) => setSeverity(value === "all" ? "" : value)}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="All severities" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All severities</SelectItem>
+                          <SelectItem value="low">Low</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="critical">Critical</SelectItem>
+                          
+                        </SelectContent>
+                      </Select>
+                  </div>
+    
+                  {/* Start Date */}
+                  <div className="min-w-[160px] sm:flex-1 w-full">
+                    <CalendarPopover
+                      selected={startDate ? new Date(startDate) : undefined}
+                      onSelect={(date) =>
+                        setStartDate(date ? date.toISOString().split("T")[0] : "")
+                      }
+                      placeholder="Start date"
+                    />
+                  </div>
+    
+                  {/* End Date */}
+                  <div className="min-w-[160px] sm:flex-1 w-full">
+                      <CalendarPopover
+                        selected={endDate ? new Date(endDate) : undefined}
+                        onSelect={(date) =>
+                          setEndDate(date ? date.toISOString().split("T")[0] : "")
+                        }
+                        placeholder="End date"
+                      />
+                  </div>
+                  
+                  {/* --- Sort Order --- */}
+                  <div className="min-w-[180px] sm:flex-1 w-full">
+                    <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as "asc" | "desc")}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Sort order" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="asc">Ascending</SelectItem>
+                        <SelectItem value="desc">Descending</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+    
+                </div>
+
             {loading ? (
               <div className="text-muted-foreground">Loading NCEs...</div>
             ) : nces.length === 0 ? (
@@ -158,6 +322,8 @@ export default function NCEPage() {
                     
                   </div>
                 </div>
+
+                
 
                 {nces.map((nce) => {
                   const SeverityIcon =
@@ -198,6 +364,71 @@ export default function NCEPage() {
                     </Link>
                   )
                 })}
+
+                {/* Pagination */}
+                <Pagination className="mt-6 flex justify-center">
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          if (page > 0) setPage(page - 1)
+                        }}
+                      />
+                    </PaginationItem>
+
+                    {(() => {
+                      const pages = []
+                      let start = Math.max(0, page - 1)
+                      let end = Math.min(totalPages, start + 3)
+                      if (end - start < 3) start = Math.max(0, end - 3)
+
+                      if (start > 0)
+                        pages.push(
+                          <PaginationItem key="start-ellipsis">
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        )
+
+                      for (let i = start; i < end; i++) {
+                        pages.push(
+                          <PaginationItem key={i}>
+                            <PaginationLink
+                              href="#"
+                              isActive={i === page}
+                              onClick={(e) => {
+                                e.preventDefault()
+                                setPage(i)
+                              }}
+                            >
+                              {i + 1}
+                            </PaginationLink>
+                          </PaginationItem>
+                        )
+                      }
+
+                      if (end < totalPages)
+                        pages.push(
+                          <PaginationItem key="end-ellipsis">
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        )
+
+                      return pages
+                    })()}
+
+                    <PaginationItem>
+                      <PaginationNext
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setPage((prev) => Math.min(prev + 1, totalPages - 1))
+                        }}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
               </div>
             )}
           </div>

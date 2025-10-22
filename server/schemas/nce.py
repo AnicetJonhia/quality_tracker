@@ -8,10 +8,6 @@ from .delivery import DeliveryResponseWithProject
 
 
 
-# Update NCE : tous les champs optionnels, patchable
-
-
-
 
 
 class NCECreate(BaseModel):
@@ -35,6 +31,9 @@ class NCEUpdate(BaseModel):
     severity: Optional[NCESeverity] = None
     category: Optional[str] = None
 
+    class Config:
+        from_attributes = True
+
 
 class NCEResponse(BaseModel):
     id: int
@@ -47,6 +46,15 @@ class NCEResponse(BaseModel):
     created_at: datetime
     resolved_at: Optional[datetime] = None
     files: Optional[List[FileResponse]] = None
+
+    class Config:
+        from_attributes = True
+
+
+
+class NCEResponseWithTotal(BaseModel):
+    total: int
+    nces: List[NCEResponse]
 
     class Config:
         from_attributes = True

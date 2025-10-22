@@ -74,7 +74,7 @@ export default function DeliveriesPage() {
   useEffect(() => {
     setPage(0) // reset page when filters or sort change
     loadDeliveries(0)
-  }, [search, projectName, clientEmail, status, startDate, endDate, sortOrder])
+  }, [search,page, projectName, clientEmail, status, startDate, endDate, sortOrder])
 
   useEffect(() => {
     loadDeliveries(page)
