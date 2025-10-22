@@ -76,6 +76,7 @@ export default function NCEPage() {
       category: category || undefined,
       delivery_title: deliveryTitle || undefined,
       project_name: projectName || undefined,
+      client_email: clientEmail || undefined,
       start_date: startDate || undefined,
       end_date: endDate || undefined,
       sort_by: "created_at",
@@ -91,20 +92,16 @@ export default function NCEPage() {
 }
 
 
-  // 🧠 1️⃣ Effet pour recharger les données quand la page change
+
+
+
 useEffect(() => {
   loadNCEs(page)
-}, [page])
-
-// 🧠 2️⃣ Effet pour réinitialiser à la page 0 quand un filtre change
-useEffect(() => {
-  setPage(0)
-  loadNCEs(0)
-}, [search, status, severity, category, deliveryTitle, projectName, startDate, endDate, sortOrder])
+}, [search,page, status, severity, category, deliveryTitle, projectName, startDate, endDate, sortOrder])
 
   const handleNCECreated = () => {
     setShowCreateDialog(false)
-    loadNCEs(0)
+    loadNCEs()
   }
 
   
@@ -181,6 +178,118 @@ useEffect(() => {
               </Card>
             </div>
 
+            {/* --- Filters --- */}
+                <div className="flex flex-wrap gap-4 mb-4">
+    
+                  {/* Search */}
+                  <div className="flex-1 min-w-[200px]">
+                    <Input
+                      type="text"
+                      placeholder="Search NCE..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="w-full"
+                    />
+                  </div>
+                  
+    
+                  {/* Project Name Filter */}
+                    <div className="flex-1 min-w-[200px]">
+                      <ProjectNameFilter value={projectName} onChange={setProjectName} />
+                    </div>
+    
+                    {/* Client Email Filter */}
+                    <div className="flex-1 min-w-[200px]">
+                      <ClientEmailFilter value={clientEmail} onChange={setClientEmail} />
+                    </div>
+    
+                  {/* Delivery */}
+                  <div className="flex-1 min-w-[200px]">
+                    <Input
+                      type="text"
+                      placeholder="DeliveryTitle..."
+                      value={search}
+                      onChange={(e) => setDeliveryTitle(e.target.value)}
+                      className="w-full"
+                    />
+                  </div>
+                  
+                  
+                  {/* --- Status Filter --- */}
+                  
+                  <div className="min-w-[180px] sm:flex-1 w-full">
+                      <Select 
+                      value={status || "all"} 
+                      onValueChange={(value) => setStatus(value === "all" ? "" : value)}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="All statuses" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All statuses</SelectItem>
+                          <SelectItem value="open">Open</SelectItem>
+                          <SelectItem value="in_progress">In Progress</SelectItem>
+                          <SelectItem value="resolved">Resolved</SelectItem>
+                          
+                        </SelectContent>
+                      </Select>
+                  </div>
+
+                  {/* --- Severity Filter --- */}
+                  
+                  <div className="min-w-[180px] sm:flex-1 w-full">
+                      <Select 
+                      value={status || "all"} 
+                      onValueChange={(value) => setSeverity(value === "all" ? "" : value)}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="All severities" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All severities</SelectItem>
+                          <SelectItem value="low">Low</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="critical">Critical</SelectItem>
+                          
+                        </SelectContent>
+                      </Select>
+                  </div>
+    
+                  {/* Start Date */}
+                  <div className="min-w-[160px] sm:flex-1 w-full">
+                    <CalendarPopover
+                      selected={startDate ? new Date(startDate) : undefined}
+                      onSelect={(date) =>
+                        setStartDate(date ? date.toISOString().split("T")[0] : "")
+                      }
+                      placeholder="Start date"
+                    />
+                  </div>
+    
+                  {/* End Date */}
+                  <div className="min-w-[160px] sm:flex-1 w-full">
+                      <CalendarPopover
+                        selected={endDate ? new Date(endDate) : undefined}
+                        onSelect={(date) =>
+                          setEndDate(date ? date.toISOString().split("T")[0] : "")
+                        }
+                        placeholder="End date"
+                      />
+                  </div>
+                  
+                  {/* --- Sort Order --- */}
+                  <div className="min-w-[180px] sm:flex-1 w-full">
+                    <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as "asc" | "desc")}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Sort order" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="asc">Ascending</SelectItem>
+                        <SelectItem value="desc">Descending</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+    
+                </div>
+
             {loading ? (
               <div className="text-muted-foreground">Loading NCEs...</div>
             ) : nces.length === 0 ? (
@@ -213,6 +322,8 @@ useEffect(() => {
                     
                   </div>
                 </div>
+
+                
 
                 {nces.map((nce) => {
                   const SeverityIcon =

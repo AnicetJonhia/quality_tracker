@@ -78,6 +78,7 @@ export interface GetNCEsParams {
   category?: string;
   delivery_title?: string;
   project_name?: string;
+  client_email?: string;
   start_date?: string;   // format “YYYY-MM-DD”
   end_date?: string;     // idem
   sort_by?: string;

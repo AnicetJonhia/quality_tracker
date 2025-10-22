@@ -88,6 +88,7 @@ def get_nces(
     category: Optional[str] = None,
     delivery_title: Optional[str] = None,
     project_name: Optional[str] = None,
+    client_email: Optional[str] = None,
     start_date: Optional[date] = Query(None),
     end_date: Optional[date] = Query(None),
     sort_by: Optional[str] = Query("created_at"),
@@ -139,6 +140,9 @@ def get_nces(
         query = query.filter(DeliveryAlias.title.ilike(f"%{delivery_title}%"))
     if project_name:
         query = query.filter(ProjectAlias.name.ilike(f"%{project_name}%"))
+    if client_email:
+        query = query.filter(UserAlias.email.ilike(f"%{client_email}%"))  # 👈 Filtre ajouté ici
+
 
     # 🔹 Filtrage par date
     if start_date:
