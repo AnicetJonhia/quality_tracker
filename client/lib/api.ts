@@ -1,6 +1,9 @@
 import { get } from "http"
 import { getAuthHeaders , getAuthHeadersMultipart} from "./auth"
-import {Project, GetProjectsParams, Client, Delivery,GetDeliveriesParams, GetActivitiesParams,Activity} from "@/lib/type"
+import {
+  Project, GetProjectsParams, Client, Delivery,GetDeliveriesParams, GetActivitiesParams,Activity,
+  NCE, GetNCEsParams
+} from "@/lib/type"
 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
@@ -136,7 +139,25 @@ export const api = {
 
 
   // NCEs
-  getNCEs: () => fetchAPI("/api/nces"),
+  getNCEs : async (
+      params?: GetNCEsParams
+    ): Promise<{ nces: NCE[]; total_count?: number }> => {
+      const cleanParams: Record<string, string> = {};
+      
+      if (params) {
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== "") {
+            cleanParams[key] = String(value);
+          }
+        });
+      }
+      
+      const query = new URLSearchParams(cleanParams).toString();
+      const res = await fetchAPI(`/api/nces${query ? `?${query}` : ""}`);
+      
+      return res;
+    },
+
   getNCE: (id: number) => fetchAPI(`/api/nces/${id}`),
   createNCE: async (data: { delivery_id: number; title: string; description: string; files?: File[] }) => {
     const formData = new FormData()

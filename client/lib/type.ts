@@ -69,6 +69,21 @@ export interface NCE {
   files: FileItem[]
 }
 
+export interface GetNCEsParams {
+  skip?: number;
+  limit?: number;
+  search?: string;
+  status_filter?: string;
+  severity_filter?: string;
+  category?: string;
+  delivery_title?: string;
+  project_name?: string;
+  start_date?: string;   // format “YYYY-MM-DD”
+  end_date?: string;     // idem
+  sort_by?: string;
+  sort_order?: "asc" | "desc";
+}
+
 export interface Survey {
   id: number
   delivery: Delivery
