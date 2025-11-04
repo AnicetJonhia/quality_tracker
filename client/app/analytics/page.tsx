@@ -58,7 +58,7 @@ export default function AnalyticsPage() {
 
         setStats(statsData)
         setDeliveries(deliveriesData.deliveries)
-        setNCEs(ncesData)
+        setNCEs(ncesData.nces)
         setSurveys(surveysData)
       } catch (error) {
         console.error("[v0] Failed to load analytics data:", error)
